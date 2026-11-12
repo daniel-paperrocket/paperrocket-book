@@ -32,7 +32,10 @@ export default class AttendeeReminderEmail extends AttendeeScheduledEmail {
         date: this.getFormattedDate(),
       })}`,
       html: await this.getHtml(this.calEvent, this.attendee),
-      text: this.getTextBody(this.reminderKind === "1h" ? "pr_reminder_title_1h" : "pr_reminder_title_24h"),
+      text: this.getTextBody(
+        this.reminderKind === "1h" ? "pr_reminder_title_1h" : "pr_reminder_title_24h",
+        "pr_reminder_subtitle"
+      ),
     };
   }
 

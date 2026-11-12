@@ -20,6 +20,9 @@ type OnboardingViewProps = {
   userEmail: string;
 };
 
+// paperrocket-book: the plan step offers Team and Organization, which this build does not have; go straight to personal setup
+const PRBOOK_SKIP_PLAN_STEP = true;
+
 export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
   const router = useRouter();
   const { t } = useLocale();
@@ -38,7 +41,7 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
   // If user has any team membership (pending or accepted), redirect them directly to personal onboarding
   // This handles the case where users sign up with an invite token (membership is auto-accepted)
   useEffect(() => {
-    if (!isPendingMembership && hasTeamMembership) {
+    if (PRBOOK_SKIP_PLAN_STEP || (!isPendingMembership && hasTeamMembership)) { // paperrocket-book: skip the plan step
       setSelectedPlan("personal");
       startTransition(() => {
         router.push("/onboarding/personal/settings");
@@ -129,7 +132,7 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
   const selectedPlanData = plans.find((plan) => plan.id === selectedPlan);
 
   // Show loading state while checking for team membership or if redirecting
-  if (isPendingMembership || hasTeamMembership) {
+  if (PRBOOK_SKIP_PLAN_STEP || isPendingMembership || hasTeamMembership) { // paperrocket-book: show loading while redirecting
     return (
       <OnboardingLayout userEmail={userEmail}>
         <OnboardingCard title={t("loading")} subtitle="" />

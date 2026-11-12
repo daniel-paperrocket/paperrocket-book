@@ -5,6 +5,9 @@ set -x
 # NOTE: if these values are the same, this will be skipped.
 scripts/replace-placeholder.sh "$BUILT_NEXT_PUBLIC_WEBAPP_URL" "$NEXT_PUBLIC_WEBAPP_URL"
 
+# paperrocket-book: runtime branding and brand files (see paperrocket/README.md)
+scripts/paperrocket-start.sh
+
 scripts/wait-for-it.sh ${DATABASE_HOST} -- echo "database is up"
 npx prisma migrate deploy --schema /calcom/packages/prisma/schema.prisma
 npx ts-node --transpile-only /calcom/scripts/seed-app-store.ts

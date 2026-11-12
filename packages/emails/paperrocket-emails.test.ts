@@ -55,7 +55,7 @@ const CASES: Array<{
   { template: "AttendeeDeclinedEmail", heading: "That booking request was declined" },
   { template: "AttendeeReminderEmail", heading: "Your booking is tomorrow", extra: { reminderKind: "24h" } },
   { template: "AttendeeReminderEmail", heading: "Your booking starts in an hour", extra: { reminderKind: "1h" } },
-  { template: "OrganizerScheduledEmail", heading: "You are booked", extra: { attendee: organizer } },
+  { template: "OrganizerScheduledEmail", heading: "You have a new booking", extra: { attendee: organizer } },
   { template: "OrganizerCancelledEmail", heading: "Your booking has been cancelled", extra: { attendee: organizer } },
   {
     template: "ForgotPasswordEmail",

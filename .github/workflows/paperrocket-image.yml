@@ -1,4 +1,4 @@
-# paperrocket-book: builds and pushes our image to GHCR. New file, not upstream.
+# paperrocket-book: builds and pushes our image to GHCR (tags diy-* and manual runs). New file, not upstream.
 # Tag scheme: diy-<YYYY.MM.DD of upstream commit>-pr.<n>  (see paperrocket/README.md)
 name: paperrocket image
 

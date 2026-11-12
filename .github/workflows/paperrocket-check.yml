@@ -1,4 +1,4 @@
-# paperrocket-book: light check on our own branches and main. New file, not upstream.
+# paperrocket-book: light check on our own branches and main. New file, not upstream. (CI for pr/** and main)
 # Uses the lockfile exactly as upstream ships it (yarn, immutable), the same Node and yarn as upstream's yarn-install action.
 name: paperrocket check
 

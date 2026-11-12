@@ -7,6 +7,7 @@ on:
     branches:
       - "pr/**"
       - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -20,6 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Public repo: no client names, hosts or server paths. The base is the pinned upstream commit (PATCHES.md); move it when upstream is merged.
+      - name: No client names, hosts or server paths
+        run: bash scripts/paperrocket/check-no-infra.sh ef7954d16a
 
       - name: Self-test runtime branding script
         run: sh paperrocket/test-runtime-brand.sh

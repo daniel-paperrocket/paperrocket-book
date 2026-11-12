@@ -79,3 +79,6 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 - `packages/i18n/locales/en/common.json`: `organizer` is "Organiser".
 - `packages/emails/email-manager.ts`: attendee cancel email no longer runs the booking title through `getEventName` a second time (it repeated "between X and Y" in the subject and body) unless the event type has a custom event name.
 - New env: `PR_EMAIL_NAME` (name guests see, default the app name), `PR_EMAIL_FOOTER_LINES` (address and phone, separated by |). Also set `NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS`: upstream defaults to help@cal.com and the password and verification emails print it.
+
+## Public-repo leak check (13 Nov)
+- `scripts/paperrocket/check-no-infra.sh` (copied from paperrocket-sign, own-file list adapted) and a step at the top of `.github/workflows/paperrocket-check.yml` (also now runs on pull requests). It fails if our own files, or any line we add since the pinned upstream commit, name a client, a host, a server path or 127.0.0.1. The real cutover runbook is private; `docs/cutover.md` is a generic outline. Update the base commit in the workflow when upstream is merged.

@@ -1,0 +1,92 @@
+# paperrocket-book: builds and pushes our image to GHCR. New file, not upstream.
+# Tag scheme: diy-<YYYY.MM.DD of upstream commit>-pr.<n>  (see paperrocket/README.md)
+name: paperrocket image
+
+on:
+  push:
+    tags:
+      - "diy-*-pr.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Extra image tag to publish (for example diy-2026.11.11-pr.1). Leave empty for the sha tag only."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/daniel-paperrocket/paperrocket-book
+  # Throwaway build-time database, the same values upstream's release workflow uses. Nothing here is a secret.
+  POSTGRES_USER: unicorn_user
+  POSTGRES_PASSWORD: magical_password
+  POSTGRES_DB: calendso
+  DATABASE_HOST: "database:5432"
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Self-test runtime branding script
+        run: sh paperrocket/test-runtime-brand.sh
+
+      - name: Work out image tags
+        id: tags
+        run: |
+          short_sha="$(git rev-parse --short=7 HEAD)"
+          tags="${IMAGE}:sha-${short_sha}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tags="${tags},${IMAGE}:${GITHUB_REF_NAME}"
+          elif [ -n "${{ inputs.tag }}" ]; then
+            tags="${tags},${IMAGE}:${{ inputs.tag }}"
+          fi
+          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+          echo "Publishing: ${tags}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The Next.js build needs a reachable database (as upstream's docker-build-and-test action does).
+      # The compose file names the container "database" on a network called "stack".
+      - name: Start build-time database
+        run: |
+          docker compose up -d database
+          docker compose ps database
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=container:database
+          buildkitd-flags: |
+            --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host
+
+      # No NEXT_PUBLIC_APP_NAME and friends here: the Dockerfile bakes PRBOOK_PLACEHOLDER_* values and
+      # scripts/paperrocket-start.sh swaps them for the container's real env when it starts.
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.tags.outputs.tags }}
+          build-args: |
+            NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
+            NEXT_PUBLIC_API_V2_URL=http://localhost:5555/api/v2
+            NEXT_PUBLIC_LICENSE_CONSENT=agree
+            CALCOM_TELEMETRY_DISABLED=1
+            DATABASE_URL=postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.DATABASE_HOST }}/${{ env.POSTGRES_DB }}
+            DATABASE_DIRECT_URL=postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.DATABASE_HOST }}/${{ env.POSTGRES_DB }}
+
+      - name: Stop build-time database
+        if: always()
+        run: docker compose down

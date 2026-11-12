@@ -1,0 +1,37 @@
+# paperrocket-book: light check on our own branches. New file, not upstream.
+# Uses the lockfile exactly as upstream ships it (yarn, immutable), the same Node and yarn as upstream's yarn-install action.
+name: paperrocket check
+
+on:
+  push:
+    branches:
+      - "pr/**"
+
+permissions:
+  contents: read
+
+env:
+  NODE_OPTIONS: --max-old-space-size=12288
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Self-test runtime branding script
+        run: sh paperrocket/test-runtime-brand.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: v22.x
+
+      # yarn itself is pinned by yarnPath in .yarnrc.yml, so no corepack step is needed.
+      - name: Install dependencies
+        run: yarn install --immutable --inline-builds
+        env:
+          YARN_ENABLE_GLOBAL_CACHE: "false"
+
+      # Only the packages we touch. Turbo runs the trpc build first (dependsOn in turbo.json).
+      - name: Type-check touched packages
+        run: yarn turbo run type-check:ci --filter=@calcom/web --filter=@calcom/app-store --log-prefix=none

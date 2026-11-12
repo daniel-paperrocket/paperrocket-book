@@ -49,7 +49,9 @@ async function localRateLimit({ rateLimitingType = "core", identifier }: RateLim
   const { limit, windowMs } = LOCAL_LIMITS[type];
   const now = Date.now();
   if (localWindows.size > 5000) {
-    for (const [key, win] of localWindows) if (win.resetAt <= now) localWindows.delete(key);
+    localWindows.forEach((w, k) => {
+      if (w.resetAt <= now) localWindows.delete(k);
+    });
   }
   const key = `${type}:${identifier}`;
   let win = localWindows.get(key);

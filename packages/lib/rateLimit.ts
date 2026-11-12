@@ -30,10 +30,55 @@ export const API_KEY_RATE_LIMIT = 30;
 
 let warned = false;
 
+// paperrocket-book: fixed-window limiter held in this process. Same limits as the Unkey ones below.
+// One container per site, so process memory is enough; a restart clears the counts.
+const LOCAL_LIMITS: Record<NonNullable<RateLimitHelper["rateLimitingType"]>, { limit: number; windowMs: number }> = {
+  core: { limit: 10, windowMs: 60_000 },
+  instantMeeting: { limit: 1, windowMs: 10 * 60_000 },
+  common: { limit: 200, windowMs: 60_000 },
+  forcedSlowMode: { limit: 1, windowMs: 30_000 },
+  api: { limit: API_KEY_RATE_LIMIT, windowMs: 60_000 },
+  ai: { limit: 20, windowMs: 24 * 60 * 60_000 },
+  sms: { limit: 50, windowMs: 5 * 60_000 },
+  smsMonth: { limit: 250, windowMs: 30 * 24 * 60 * 60_000 },
+};
+const localWindows = new Map<string, { count: number; resetAt: number }>();
+
+async function localRateLimit({ rateLimitingType = "core", identifier }: RateLimitHelper) {
+  const type = isIpInBanListString(identifier) ? "forcedSlowMode" : rateLimitingType;
+  const { limit, windowMs } = LOCAL_LIMITS[type];
+  const now = Date.now();
+  if (localWindows.size > 5000) {
+    for (const [key, win] of localWindows) if (win.resetAt <= now) localWindows.delete(key);
+  }
+  const key = `${type}:${identifier}`;
+  let win = localWindows.get(key);
+  if (!win || win.resetAt <= now) {
+    win = { count: 0, resetAt: now + windowMs };
+    localWindows.set(key, win);
+  }
+  win.count += 1;
+  return {
+    success: win.count <= limit,
+    limit,
+    remaining: Math.max(0, limit - win.count),
+    reset: win.resetAt,
+  } as RatelimitResponse;
+}
+
 export function rateLimiter() {
   const { UNKEY_ROOT_KEY } = process.env;
 
   if (!UNKEY_ROOT_KEY) {
+    // paperrocket-book: without Unkey, use an in-memory limiter (see local limiter below) instead of no limit.
+    // Off in tests and when PR_LOCAL_RATE_LIMIT=false.
+    if (process.env.NODE_ENV !== "test" && process.env.PR_LOCAL_RATE_LIMIT !== "false") {
+      if (!warned) {
+        log.warn("UNKEY_ROOT_KEY not set: using the in-memory rate limiter (paperrocket-book).");
+        warned = true;
+      }
+      return localRateLimit;
+    }
     if (!warned) {
       log.warn("Disabled because the UNKEY_ROOT_KEY environment variable was not found.");
       warned = true;

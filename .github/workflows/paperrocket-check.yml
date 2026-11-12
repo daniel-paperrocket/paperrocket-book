@@ -35,3 +35,19 @@ jobs:
       # Only the packages we touch. Turbo runs the trpc build first (dependsOn in turbo.json).
       - name: Type-check touched packages
         run: yarn turbo run type-check:ci --filter=@calcom/web --filter=@calcom/app-store --log-prefix=none
+
+      # Our unit tests: letterhead and wording for every booking email, and the local login limiter.
+      # Each email is also written out as HTML and uploaded, so it can be looked at.
+      - name: Test emails and rate limiter
+        run: yarn vitest run packages/emails/paperrocket-emails.test.ts packages/lib/rateLimit.local.test.ts
+        env:
+          TZ: UTC
+          PR_SNAPSHOT_DIR: ${{ runner.temp }}/email-snapshots
+
+      - name: Upload email snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: email-snapshots
+          path: ${{ runner.temp }}/email-snapshots
+          if-no-files-found: ignore

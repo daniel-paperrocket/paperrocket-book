@@ -28,6 +28,7 @@ import AttendeeAwaitingPaymentEmail from "./templates/attendee-awaiting-payment-
 import AttendeeCancelledEmail from "./templates/attendee-cancelled-email";
 import AttendeeCancelledSeatEmail from "./templates/attendee-cancelled-seat-email";
 import AttendeeDeclinedEmail from "./templates/attendee-declined-email";
+import AttendeeReminderEmail, { type ReminderKind } from "./templates/attendee-reminder-email"; // paperrocket-book
 import AttendeeLocationChangeEmail from "./templates/attendee-location-change-email";
 import AttendeeRequestEmail from "./templates/attendee-request-email";
 import AttendeeRescheduledEmail from "./templates/attendee-rescheduled-email";
@@ -737,4 +738,14 @@ export const sendAddGuestsEmailsAndSMS = async (args: {
   }
 
   await Promise.all(emailsAndSMSToSend);
+};
+
+// paperrocket-book: reminder to every attendee, 24 h or 1 h before the booking.
+export const sendAttendeeReminderEmails = async (calEvent: CalendarEvent, kind: ReminderKind) => {
+  const calendarEvent = formatCalEvent(calEvent);
+  await Promise.all(
+    calendarEvent.attendees.map((attendee) =>
+      sendEmail(() => new AttendeeReminderEmail(calendarEvent, attendee, kind))
+    )
+  );
 };

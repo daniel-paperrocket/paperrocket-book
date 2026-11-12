@@ -5,6 +5,7 @@ export { AttendeeAwaitingPaymentEmail } from "./AttendeeAwaitingPaymentEmail";
 export { AttendeeCancelledEmail } from "./AttendeeCancelledEmail";
 export { AttendeeCancelledSeatEmail } from "./AttendeeCancelledSeatEmail";
 export { AttendeeDeclinedEmail } from "./AttendeeDeclinedEmail";
+export { AttendeeReminderEmail } from "./AttendeeReminderEmail";
 export { AttendeeLocationChangeEmail } from "./AttendeeLocationChangeEmail";
 export { AttendeeRequestEmail } from "./AttendeeRequestEmail";
 export { AttendeeRescheduledEmail } from "./AttendeeRescheduledEmail";

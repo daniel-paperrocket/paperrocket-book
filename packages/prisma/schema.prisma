@@ -1079,6 +1079,9 @@ model ResetPasswordRequest {
 
 enum ReminderType {
   PENDING_BOOKING_CONFIRMATION
+  // paperrocket-book: attendee reminder emails
+  ATTENDEE_REMINDER_24H
+  ATTENDEE_REMINDER_1H
 }
 
 model ReminderMail {

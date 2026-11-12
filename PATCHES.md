@@ -72,3 +72,10 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 
 - No local build, install or test (yarn runs only in CI). Edits were checked by reading types and call sites; CI is the compile.
 - The shell script has a self-test that passes locally.
+
+## Letterhead round 2 (13 Nov)
+- `packages/emails/src/components/BaseEmailHtml.tsx`: logo tile (72 px, `PR_EMAIL_LOGO_URL`), 4 px brand stripe on the card, eyebrow and left-aligned title, centred footer (name, company, `PR_EMAIL_FOOTER_LINES`, reply note, site link). New optional prop `eyebrow` (booking emails pass "Booking").
+- `Info.tsx` (label left, value right rows), `WhenInfo.tsx` (NZ format, "Friday 20 November 2026, 2.00 to 2.30pm"), `WhoInfo.tsx` (name, role, email), `ManageLink.tsx` and `CallToAction.tsx` (table buttons in the brand colour), `LocationInfo.tsx` ("Cal Video" shows as "Video call").
+- `packages/i18n/locales/en/common.json`: `organizer` is "Organiser".
+- `packages/emails/email-manager.ts`: attendee cancel email no longer runs the booking title through `getEventName` a second time (it repeated "between X and Y" in the subject and body) unless the event type has a custom event name.
+- New env: `PR_EMAIL_NAME` (name guests see, default the app name), `PR_EMAIL_FOOTER_LINES` (address and phone, separated by |). Also set `NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS`: upstream defaults to help@cal.com and the password and verification emails print it.

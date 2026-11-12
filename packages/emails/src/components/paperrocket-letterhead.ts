@@ -28,6 +28,14 @@ export const getLogoUrl = (): string | undefined => {
   return value && /^https:\/\//.test(value) ? value : undefined;
 };
 
-export const getLetterheadName = (): string => APP_NAME;
+/** Name guests see. Env PR_EMAIL_NAME (for example "Paper Rocket"), else the app name. */
+export const getLetterheadName = (): string => process.env.PR_EMAIL_NAME?.trim() || APP_NAME;
+
+/** Optional footer lines under the name (address, phone). Env PR_EMAIL_FOOTER_LINES, separated by | . */
+export const getFooterLines = (): string[] =>
+  (process.env.PR_EMAIL_FOOTER_LINES ?? "")
+    .split("|")
+    .map((l) => l.trim())
+    .filter(Boolean);
 export const getFooterName = (): string => COMPANY_NAME;
 export const getHomeUrl = (): string => WEBSITE_URL || WEBAPP_URL;

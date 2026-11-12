@@ -1,6 +1,8 @@
 import { getBookingUrl, getCancelLink, getRescheduleLink } from "@calcom/lib/CalEventParser";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 
+import { getBrandColour, PR_COLOURS, PR_FONT_STACK } from "./paperrocket-letterhead";
+
 export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person }) {
   // Only the original attendee can make changes to the event
   // Guests cannot
@@ -43,79 +45,43 @@ export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person })
     (isOriginalAttendee || isOrganizer || isTeamMember) &&
     (hasCancelLink || (!isRecurringEvent && hasRescheduleLink) || hasBookingLink)
   ) {
-    return (
-      <div
-        style={{
-          fontFamily: "Roboto, Helvetica, sans-serif",
-          fontSize: "16px",
-          fontWeight: 500,
-          lineHeight: "0px",
-          textAlign: "left",
-          color: "#101010",
-        }}>
-        <p
+    // paperrocket-book: buttons instead of a text sentence (Reschedule filled, Cancel outlined).
+    const brand = getBrandColour();
+    const button = (href: string, label: string, filled: boolean) => (
+      <td style={{ padding: "0 8px 8px 0" }}>
+        <a
+          href={href}
           style={{
-            fontWeight: 400,
-            lineHeight: "24px",
+            display: "inline-block",
+            minWidth: "120px",
+            padding: "13px 22px",
+            borderRadius: "6px",
+            border: `1px solid ${filled ? brand : PR_COLOURS.line}`,
+            backgroundColor: filled ? brand : PR_COLOURS.card,
+            color: filled ? "#FFFFFF" : PR_COLOURS.ink,
+            fontFamily: PR_FONT_STACK,
+            fontSize: "16px",
+            fontWeight: 600,
+            lineHeight: "20px",
             textAlign: "center",
-            width: "100%",
+            textDecoration: "none",
           }}>
-          {(shouldDisplayRescheduleLink || hasCancelLink) && <>{t("need_to_make_a_change")}</>}
-          {shouldDisplayRescheduleLink && (
-            <span>
-              <a
-                href={rescheduleLink}
-                style={{
-                  color: "#374151",
-                  marginLeft: "5px",
-                  marginRight: "5px",
-                  textDecoration: "underline",
-                }}>
-                <>{t("reschedule")}</>
-              </a>
-              {hasCancelLink && <>{t("or_lowercase")}</>}
-            </span>
-          )}
-          {hasCancelLink && (
-            <span>
-              <a
-                href={cancelLink}
-                style={{
-                  color: "#374151",
-                  marginLeft: "5px",
-                  textDecoration: "underline",
-                }}>
-                <>{t("cancel")}</>
-              </a>
-            </span>
-          )}
-
-          {props.calEvent.platformClientId && hasBookingLink && (
-            <span>
-              {(hasCancelLink || shouldDisplayRescheduleLink) && (
-                <span
-                  style={{
-                    marginLeft: "5px",
-                  }}>
-                  {t("or_lowercase")}
-                </span>
-              )}
-              <a
-                href={bookingLink}
-                style={{
-                  color: "#374151",
-                  marginLeft: "5px",
-                  textDecoration: "underline",
-                }}>
-                <>{t("check_here")}</>
-              </a>
-            </span>
-          )}
-        </p>
-      </div>
+          {label}
+        </a>
+      </td>
+    );
+    return (
+      <table role="presentation" cellPadding={0} cellSpacing={0}>
+        <tbody>
+          <tr>
+            {shouldDisplayRescheduleLink && button(rescheduleLink as string, t("reschedule"), true)}
+            {hasCancelLink && button(cancelLink as string, t("cancel"), !shouldDisplayRescheduleLink)}
+            {props.calEvent.platformClientId && hasBookingLink && button(bookingLink as string, t("check_here"), false)}
+          </tr>
+        </tbody>
+      </table>
     );
   }
-
   // Don't have the rights to the manage link
   return null;
 }

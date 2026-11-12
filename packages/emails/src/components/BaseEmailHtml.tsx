@@ -1,12 +1,13 @@
 /* eslint-disable @next/next/no-head-element */
-// paperrocket-book: rewritten as a letterhead layout (name or logo, brand rule, plain title, quiet footer).
-// Same props as upstream so every template that uses it still compiles. `headerType` is accepted and ignored
-// (the round icon images are gone).
+// paperrocket-book: rewritten as the Paper Rocket letterhead (logo tile, brand stripe, eyebrow and left-aligned title,
+// detail rows, button, centred footer), matching paperrocket-sign. Same props as upstream so every template that uses
+// it still compiles; `headerType` is accepted and ignored (the round icon images are gone). `eyebrow` is new.
 import EmailHead from "./EmailHead";
 import type { BodyHeadType } from "./EmailSchedulingBodyHeader";
 import RawHtml from "./RawHtml";
 import {
   getBrandColour,
+  getFooterLines,
   getFooterName,
   getHomeUrl,
   getLetterheadName,
@@ -22,20 +23,21 @@ const Html = (props: { children: React.ReactNode }) => (
   </>
 );
 
-const Letterhead = ({ brand }: { brand: string }) => {
+const Letterhead = () => {
   const logo = getLogoUrl();
   const name = getLetterheadName();
   const home = getHomeUrl();
   return (
     <tr>
-      <td align="center" style={{ padding: "40px 40px 28px", textAlign: "center" }}>
+      <td align="center" style={{ padding: "32px 40px 24px", textAlign: "center" }}>
         <a href={home} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
           {logo ? (
             <img
               src={logo}
               alt={name}
-              height="40"
-              style={{ display: "block", margin: "0 auto", border: 0, height: "40px", maxWidth: "100%" }}
+              width="72"
+              height="72"
+              style={{ display: "block", margin: "0 auto", border: 0, width: "72px", height: "72px" }}
             />
           ) : (
             <span
@@ -49,11 +51,20 @@ const Letterhead = ({ brand }: { brand: string }) => {
             </span>
           )}
         </a>
-        <div style={{ width: "40px", height: "3px", margin: "18px auto 0", backgroundColor: brand }} />
       </td>
     </tr>
   );
 };
+
+const Divider = () => (
+  <tr>
+    <td style={{ padding: "0 40px" }}>
+      <div style={{ borderTop: `1px solid ${PR_COLOURS.cardBorder}`, height: 0, lineHeight: 0, fontSize: 0 }}>
+        &nbsp;
+      </div>
+    </td>
+  </tr>
+);
 
 export const BaseEmailHtml = (props: {
   children: React.ReactNode;
@@ -61,10 +72,13 @@ export const BaseEmailHtml = (props: {
   subject: string;
   title?: string;
   subtitle?: React.ReactNode | string;
+  eyebrow?: string;
   headerType?: BodyHeadType;
   hideLogo?: boolean;
 }) => {
   const brand = getBrandColour();
+  const footerLines = getFooterLines();
+  const home = getHomeUrl();
   return (
     <Html>
       <EmailHead title={props.subject} />
@@ -77,7 +91,7 @@ export const BaseEmailHtml = (props: {
           style={{ width: "100%", backgroundColor: PR_COLOURS.page }}>
           <tbody>
             <tr>
-              <td align="center" style={{ padding: "32px 12px 40px" }}>
+              <td align="center" style={{ padding: "20px 12px 40px" }}>
                 <table
                   role="presentation"
                   width="100%"
@@ -88,13 +102,30 @@ export const BaseEmailHtml = (props: {
                     maxWidth: "600px",
                     backgroundColor: PR_COLOURS.card,
                     border: `1px solid ${PR_COLOURS.cardBorder}`,
+                    borderTop: `4px solid ${brand}`,
                     borderRadius: "6px",
                   }}>
                   <tbody>
-                    <Letterhead brand={brand} />
-                    {(props.title || props.subtitle) && (
+                    <Letterhead />
+                    <Divider />
+                    {(props.title || props.subtitle || props.eyebrow) && (
                       <tr>
-                        <td align="center" style={{ padding: "0 40px 8px", textAlign: "center" }}>
+                        <td align="left" style={{ padding: "28px 40px 8px", textAlign: "left" }}>
+                          {props.eyebrow && (
+                            <div
+                              style={{
+                                fontFamily: PR_FONT_STACK,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                letterSpacing: "0.06em",
+                                textTransform: "uppercase",
+                                lineHeight: "16px",
+                                color: PR_COLOURS.muted,
+                                marginBottom: 10,
+                              }}>
+                              {props.eyebrow}
+                            </div>
+                          )}
                           {props.title && (
                             <div
                               data-testid="heading"
@@ -125,14 +156,20 @@ export const BaseEmailHtml = (props: {
                         </td>
                       </tr>
                     )}
+                    {props.callToAction && (
+                      <tr>
+                        <td align="left" style={{ padding: "20px 40px 8px" }}>
+                          {props.callToAction}
+                        </td>
+                      </tr>
+                    )}
                     <tr>
-                      <td align="left" style={{ padding: "24px 40px 8px" }}>
+                      <td align="left" style={{ padding: "16px 40px 28px" }}>
                         <div
                           style={{
                             fontFamily: PR_FONT_STACK,
                             fontSize: 16,
                             fontWeight: 500,
-                            lineHeight: 1,
                             textAlign: "left",
                             color: PR_COLOURS.ink,
                           }}>
@@ -140,34 +177,41 @@ export const BaseEmailHtml = (props: {
                         </div>
                       </td>
                     </tr>
-                    {props.callToAction && (
-                      <tr>
-                        <td align="center" style={{ padding: "8px 40px 32px" }}>
-                          {props.callToAction}
-                        </td>
-                      </tr>
-                    )}
-                    <tr>
-                      <td style={{ padding: "0 40px" }}>
-                        <div style={{ borderTop: `1px solid ${PR_COLOURS.line}`, height: 0 }} />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        align="center"
-                        style={{
-                          padding: "20px 40px 28px",
-                          fontFamily: PR_FONT_STACK,
-                          fontSize: 12,
-                          lineHeight: "19px",
-                          color: PR_COLOURS.label,
-                          textAlign: "center",
-                        }}>
-                        {!props.hideLogo && <div>{getFooterName()}</div>}
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
+              </td>
+            </tr>
+            <tr>
+              <td
+                align="center"
+                style={{
+                  padding: "0 24px 40px",
+                  fontFamily: PR_FONT_STACK,
+                  fontSize: 12,
+                  lineHeight: "19px",
+                  color: PR_COLOURS.label,
+                  textAlign: "center",
+                }}>
+                {!props.hideLogo && (
+                  <>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: PR_COLOURS.ink }}>
+                      {getLetterheadName()}
+                    </div>
+                    <div>{getFooterName()}</div>
+                    {footerLines.map((line) => (
+                      <div key={line}>{line}</div>
+                    ))}
+                    <div style={{ width: "24px", height: "1px", margin: "14px auto", backgroundColor: PR_COLOURS.line }}>
+                      &nbsp;
+                    </div>
+                    <div>Questions? Reply to this email.</div>
+                    <div style={{ marginTop: 10 }}>
+                      <a href={home} style={{ color: PR_COLOURS.label }}>
+                        {home.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </a>
+                    </div>
+                  </>
+                )}
               </td>
             </tr>
           </tbody>

@@ -1,4 +1,6 @@
-import { CallToActionIcon } from "./CallToActionIcon";
+// paperrocket-book: a plain table button in the brand colour (works in Gmail and Outlook), same props as upstream.
+// Icons are not drawn any more (the icon images are gone).
+import { getBrandColour, PR_COLOURS, PR_FONT_STACK } from "./paperrocket-letterhead";
 
 export const CallToAction = (props: {
   label: string;
@@ -7,80 +9,41 @@ export const CallToAction = (props: {
   startIconName?: string;
   endIconName?: string;
 }) => {
-  const { label, href, secondary, startIconName, endIconName } = props;
-
-  const calculatePadding = () => {
-    const paddingTop = "0.625rem";
-    const paddingBottom = "0.625rem";
-    let paddingLeft = "1rem";
-    let paddingRight = "1rem";
-
-    if (startIconName) {
-      paddingLeft = "0.875rem";
-    } else if (endIconName) {
-      paddingRight = "0.875rem";
-    }
-
-    return `${paddingTop} ${paddingRight} ${paddingBottom} ${paddingLeft}`;
+  const { label, href, secondary } = props;
+  const brand = getBrandColour();
+  const style = {
+    display: "inline-block",
+    minWidth: "120px",
+    padding: "13px 22px",
+    borderRadius: "6px",
+    border: `1px solid ${secondary ? PR_COLOURS.line : brand}`,
+    backgroundColor: secondary ? PR_COLOURS.card : brand,
+    color: secondary ? PR_COLOURS.ink : "#FFFFFF",
+    fontFamily: PR_FONT_STACK,
+    fontSize: "16px",
+    fontWeight: 600,
+    lineHeight: "20px",
+    textAlign: "center" as const,
+    textDecoration: "none",
+    cursor: "pointer",
   };
-
-  const El = href ? "a" : "button";
-  const restProps = href ? { href, target: "_blank" } : { type: "submit" };
-
   return (
-    <p
-      style={{
-        display: "inline-block",
-        background: secondary ? "#FFFFFF" : "#292929",
-        border: secondary ? "1px solid #d1d5db" : "",
-        color: "#ffffff",
-        fontFamily: "Roboto, Helvetica, sans-serif",
-        fontSize: "0.875rem",
-        fontWeight: 500,
-        lineHeight: "1rem",
-        margin: 0,
-        textDecoration: "none",
-        textTransform: "none",
-        padding: calculatePadding(),
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        msoPaddingAlt: "0px",
-        borderRadius: "6px",
-        boxSizing: "border-box",
-        height: "2.25rem",
-      }}>
-      {/* @ts-expect-error shared props between href and button */}
-      <El
-        style={{
-          color: secondary ? "#292929" : "#FFFFFF",
-          textDecoration: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          margin: "auto",
-          appearance: "none",
-          background: "transparent",
-          border: "none",
-          padding: 0,
-          fontSize: "inherit",
-          fontWeight: 500,
-          lineHeight: "1rem",
-          cursor: "pointer",
-        }}
-        {...restProps}
-        rel="noreferrer">
-        {startIconName && (
-          <CallToActionIcon
-            style={{
-              marginRight: "0.5rem",
-              marginLeft: 0,
-            }}
-            iconName={startIconName}
-          />
-        )}
-        {label}
-        {endIconName && <CallToActionIcon iconName={endIconName} />}
-      </El>
-    </p>
+    <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: "8px 0 16px" }}>
+      <tbody>
+        <tr>
+          <td>
+            {href ? (
+              <a href={href} target="_blank" rel="noreferrer" style={style}>
+                {label}
+              </a>
+            ) : (
+              <button type="submit" style={style}>
+                {label}
+              </button>
+            )}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 };

@@ -31,6 +31,21 @@ export function getRecurringWhen({
   return "";
 }
 
+// paperrocket-book: NZ style, "Friday 20 November 2026, 12.00 to 12.30pm" (24-hour: "13.00 to 13.30").
+function formatRange(
+  start: (format: string) => string,
+  end: (format: string) => string,
+  timeFormat: TimeFormat
+) {
+  const date = start("dddd D MMMM YYYY");
+  if (String(timeFormat).includes("H")) {
+    return `${date}, ${start("HH.mm")} to ${end("HH.mm")}`;
+  }
+  const sameHalf = start("a") === end("a");
+  const from = sameHalf ? start("h.mm") : start("h.mma");
+  return `${date}, ${from} to ${end("h.mma")}`;
+}
+
 export function WhenInfo(props: {
   calEvent: CalendarEvent;
   timeZone: string;
@@ -63,7 +78,7 @@ export function WhenInfo(props: {
         description={
           <span data-testid="when">
             {recurringEvent?.count ? `${t("starting")} ` : ""}
-            {getRecipientStart(`dddd, LL | ${timeFormat}`)} - {getRecipientEnd(timeFormat)}{" "}
+            {formatRange(getRecipientStart, getRecipientEnd, timeFormat)}{" "}
             <span style={{ color: "#4B5563" }}>({timeZone})</span>
           </span>
         }

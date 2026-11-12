@@ -1,6 +1,7 @@
+// paperrocket-book: detail rows are label-left, value-right (like the paperrocket-sign letterhead). Same props as upstream.
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 
-const Spacer = () => <p style={{ height: 6 }} />;
+import { PR_COLOURS, PR_FONT_STACK } from "./paperrocket-letterhead";
 
 export const Info = (props: {
   label: string;
@@ -17,10 +18,9 @@ export const Info = (props: {
   const safeLabel = markdownToSafeHTML(props.label.toString());
 
   const StyledHtmlContent = ({ htmlContent }: { htmlContent: string }) => {
-    const css = "color: '#101010'; font-weight: 400; line-height: 24px; margin: 0;";
+    const css = `color: ${PR_COLOURS.ink}; font-weight: 400; line-height: 24px; margin: 0;`;
     return (
-      <p
-        className="dark:text-darkgray-600 mt-2 text-sm text-gray-500 [&_a]:text-blue-500 [&_a]:underline [&_a]:hover:text-blue-600"
+      <div
         // eslint-disable-next-line react/no-danger
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized via markdownToSafeHTML
         dangerouslySetInnerHTML={{
@@ -33,24 +33,47 @@ export const Info = (props: {
   };
 
   return (
-    <>
-      {props.withSpacer && <Spacer />}
-      <div>
-        <p style={{ color: "#101010" }}>
-          {props.isLabelHTML ? <StyledHtmlContent htmlContent={safeLabel} /> : props.label}
-        </p>
-        <p
-          style={{
-            color: "#101010",
-            fontWeight: 400,
-            lineHeight: "24px",
-            whiteSpace: "pre-wrap",
-            textDecoration: props.lineThrough ? "line-through" : undefined,
-          }}>
-          {props.formatted ? <StyledHtmlContent htmlContent={safeDescription} /> : props.description}
-        </p>
-        {props.extraInfo}
-      </div>
-    </>
+    <table
+      role="presentation"
+      width="100%"
+      cellPadding={0}
+      cellSpacing={0}
+      style={{ width: "100%", borderTop: `1px solid ${PR_COLOURS.cardBorder}` }}>
+      <tbody>
+        <tr>
+          <td
+            valign="top"
+            width="110"
+            style={{
+              width: "110px",
+              padding: "12px 12px 12px 0",
+              fontFamily: PR_FONT_STACK,
+              fontSize: 14,
+              fontWeight: 400,
+              lineHeight: "22px",
+              color: PR_COLOURS.muted,
+              textAlign: "left",
+            }}>
+            {props.isLabelHTML ? <StyledHtmlContent htmlContent={safeLabel} /> : props.label}
+          </td>
+          <td
+            valign="top"
+            style={{
+              padding: "12px 0",
+              fontFamily: PR_FONT_STACK,
+              fontSize: 15,
+              fontWeight: 400,
+              lineHeight: "22px",
+              color: PR_COLOURS.ink,
+              whiteSpace: "pre-wrap",
+              textAlign: "left",
+              textDecoration: props.lineThrough ? "line-through" : undefined,
+            }}>
+            {props.formatted ? <StyledHtmlContent htmlContent={safeDescription} /> : props.description}
+            {props.extraInfo}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 };

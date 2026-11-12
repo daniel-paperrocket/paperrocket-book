@@ -21,6 +21,7 @@ const person = (name: string, email: string, tz = "Pacific/Auckland") => ({
 });
 
 const maria = person("Maria", "maria@example.test");
+const organizer = person("Daniel Rae", "daniel@example.test");
 const calEvent = {
   type: "Chat",
   title: "Chat between Daniel Rae and Maria",
@@ -41,7 +42,12 @@ const calEvent = {
 type Render = (template: string, props: Record<string, unknown>) => Promise<string>;
 let render: Render;
 
-const CASES: Array<{ template: string; heading: string; extra?: Record<string, unknown> }> = [
+const CASES: Array<{
+  template: string;
+  heading: string;
+  extra?: Record<string, unknown>;
+  noAttendee?: boolean;
+}> = [
   { template: "AttendeeScheduledEmail", heading: "You are booked" },
   { template: "AttendeeRescheduledEmail", heading: "Your booking has moved" },
   { template: "AttendeeCancelledEmail", heading: "Your booking has been cancelled" },
@@ -49,6 +55,20 @@ const CASES: Array<{ template: string; heading: string; extra?: Record<string, u
   { template: "AttendeeDeclinedEmail", heading: "That booking request was declined" },
   { template: "AttendeeReminderEmail", heading: "Your booking is tomorrow", extra: { reminderKind: "24h" } },
   { template: "AttendeeReminderEmail", heading: "Your booking starts in an hour", extra: { reminderKind: "1h" } },
+  { template: "OrganizerScheduledEmail", heading: "You are booked", extra: { attendee: organizer } },
+  { template: "OrganizerCancelledEmail", heading: "Your booking has been cancelled", extra: { attendee: organizer } },
+  {
+    template: "ForgotPasswordEmail",
+    heading: "Hi Maria",
+    noAttendee: true,
+    extra: { language: translate, user: { name: "Maria", email: "maria@example.test" }, resetLink: "https://book.example.test/reset/abc" },
+  },
+  {
+    template: "VerifyEmailByCode",
+    heading: "Hi Maria",
+    noAttendee: true,
+    extra: { language: translate, user: { name: "Maria", email: "maria@example.test" }, verificationEmailCode: "123456", isVerifyingEmail: true },
+  },
 ];
 
 describe("paperrocket-book emails", () => {
@@ -57,20 +77,31 @@ describe("paperrocket-book emails", () => {
     vi.stubEnv("NEXT_PUBLIC_COMPANY_NAME", "Test Company Ltd");
     vi.stubEnv("NEXT_PUBLIC_WEBSITE_URL", "https://www.example.test");
     vi.stubEnv("PR_EMAIL_BRAND_COLOR", "#0A7C66");
+    vi.stubEnv("PR_EMAIL_NAME", "Test Booking");
+    vi.stubEnv("PR_EMAIL_FOOTER_LINES", "1 Example Street, Wanaka | 03 555 0100");
+    vi.stubEnv("NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS", "hello@example.test");
     vi.resetModules();
     render = (await import("./src/renderEmail")).default as unknown as Render;
   });
 
-  for (const { template, heading, extra } of CASES) {
+  for (const { template, heading, extra, noAttendee } of CASES) {
     it(`${template}${extra?.reminderKind ? ` (${extra.reminderKind})` : ""} uses the letterhead and plain wording`, async () => {
-      const html = await render(template, { calEvent, attendee: maria, ...extra });
+      const html = await render(template, noAttendee ? { ...extra } : { calEvent, attendee: maria, ...extra });
 
       expect(html).toContain(heading);
+      if (template === "AttendeeScheduledEmail") {
+        expect(html).toContain("Friday 20 November 2026, 2.00 to 2.30pm"); // NZ format, 01:00Z is 14:00 NZDT
+        expect(html).toContain("Organiser");
+      }
       expect(html).toContain("Test Booking"); // letterhead name
       expect(html).toContain("Test Company Ltd"); // footer
       expect(html).toContain("#0A7C66"); // brand rule
       expect(html).not.toMatch(/\/emails\/(logo|checkCircle|xCircle|calendarCircle|teamCircle)/);
       expect(html).not.toContain("Cal.diy");
+      expect(html).not.toContain("Cal Video");
+      expect(html.toLowerCase()).not.toContain("cal.com");
+      expect(html).toContain("1 Example Street, Wanaka"); // footer lines
+      expect(html).not.toContain("Organizer"); // NZ spelling
       expect(html).not.toContain("—"); // no em dash
       expect(html.length).toBeLessThan(80_000); // Gmail clips at about 102 KB
 

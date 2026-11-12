@@ -48,13 +48,14 @@ export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person })
     // paperrocket-book: buttons instead of a text sentence (Reschedule filled, Cancel outlined).
     const brand = getBrandColour();
     const button = (href: string, label: string, filled: boolean) => (
-      <td style={{ padding: "0 8px 8px 0" }}>
+      <span style={{ display: "inline-block", margin: "0 8px 8px 0" }}>
         <a
           href={href}
           style={{
             display: "inline-block",
-            minWidth: "120px",
-            padding: "13px 22px",
+            minWidth: "110px",
+            boxSizing: "border-box",
+            padding: "13px 20px",
             borderRadius: "6px",
             border: `1px solid ${filled ? brand : PR_COLOURS.line}`,
             backgroundColor: filled ? brand : PR_COLOURS.card,
@@ -68,18 +69,14 @@ export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person })
           }}>
           {label}
         </a>
-      </td>
+      </span>
     );
     return (
-      <table role="presentation" cellPadding={0} cellSpacing={0}>
-        <tbody>
-          <tr>
+      <div style={{ fontSize: 0, lineHeight: 0 }}>
             {shouldDisplayRescheduleLink && button(rescheduleLink as string, t("reschedule"), true)}
             {hasCancelLink && button(cancelLink as string, t("cancel"), !shouldDisplayRescheduleLink)}
             {props.calEvent.platformClientId && hasBookingLink && button(bookingLink as string, t("check_here"), false)}
-          </tr>
-        </tbody>
-      </table>
+          </div>
     );
   }
   // Don't have the rights to the manage link

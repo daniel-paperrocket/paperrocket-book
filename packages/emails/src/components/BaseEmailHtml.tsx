@@ -29,7 +29,7 @@ const Letterhead = () => {
   const home = getHomeUrl();
   return (
     <tr>
-      <td align="center" style={{ padding: "32px 40px 24px", textAlign: "center" }}>
+      <td align="center" style={{ padding: "32px 28px 24px", textAlign: "center" }}>
         <a href={home} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
           {logo ? (
             <img
@@ -58,7 +58,7 @@ const Letterhead = () => {
 
 const Divider = () => (
   <tr>
-    <td style={{ padding: "0 40px" }}>
+    <td style={{ padding: "0 28px" }}>
       <div style={{ borderTop: `1px solid ${PR_COLOURS.cardBorder}`, height: 0, lineHeight: 0, fontSize: 0 }}>
         &nbsp;
       </div>
@@ -110,7 +110,7 @@ export const BaseEmailHtml = (props: {
                     <Divider />
                     {(props.title || props.subtitle || props.eyebrow) && (
                       <tr>
-                        <td align="left" style={{ padding: "28px 40px 8px", textAlign: "left" }}>
+                        <td align="left" style={{ padding: "28px 28px 8px", textAlign: "left" }}>
                           {props.eyebrow && (
                             <div
                               style={{
@@ -158,13 +158,13 @@ export const BaseEmailHtml = (props: {
                     )}
                     {props.callToAction && (
                       <tr>
-                        <td align="left" style={{ padding: "20px 40px 8px" }}>
+                        <td align="left" style={{ padding: "20px 28px 8px" }}>
                           {props.callToAction}
                         </td>
                       </tr>
                     )}
                     <tr>
-                      <td align="left" style={{ padding: "16px 40px 28px" }}>
+                      <td align="left" style={{ padding: "16px 28px 28px" }}>
                         <div
                           style={{
                             fontFamily: PR_FONT_STACK,

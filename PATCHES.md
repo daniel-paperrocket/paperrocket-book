@@ -82,3 +82,6 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 
 ## Public-repo leak check (13 Nov)
 - `scripts/paperrocket/check-no-infra.sh` (copied from paperrocket-sign, own-file list adapted) and a step at the top of `.github/workflows/paperrocket-check.yml` (also now runs on pull requests). It fails if our own files, or any line we add since the pinned upstream commit, name a client, a host, a server path or a loopback address. The real cutover runbook is private; `docs/cutover.md` is a generic outline. Update the base commit in the workflow when upstream is merged.
+
+## Turbo env pass-through (13 Nov)
+- `turbo.json`: `PR_*` added to `globalEnv`. The image starts the app with `yarn start`, which runs turbo, and turbo strict env mode only passes the variables it lists. Without this every `PR_*` setting (email name, brand colour, logo, footer lines, default location, limiter switch) was silently ignored at runtime. Found in the preview on 13 Nov.

@@ -43,9 +43,9 @@ export const Info = (props: {
         <tr>
           <td
             valign="top"
-            width="110"
+            width="96"
             style={{
-              width: "110px",
+              width: "96px",
               padding: "12px 12px 12px 0",
               fontFamily: PR_FONT_STACK,
               fontSize: 14,
@@ -66,6 +66,7 @@ export const Info = (props: {
               lineHeight: "22px",
               color: PR_COLOURS.ink,
               whiteSpace: "pre-wrap",
+              wordBreak: "break-word" as const,
               textAlign: "left",
               textDecoration: props.lineThrough ? "line-through" : undefined,
             }}>

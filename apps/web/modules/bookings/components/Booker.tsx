@@ -52,6 +52,9 @@ import { SlotSelectionModalHeader } from "./SlotSelectionModalHeader";
 import { NotFound } from "./Unavailable";
 import { VerifyCodeDialog } from "./VerifyCodeDialog";
 
+// paperrocket-book: "Overlay my calendar" sends strangers to a Cal login and a "signup is disabled" dead end
+const PRBOOK_HIDE_OVERLAY_CALENDAR = true;
+
 const BookerComponent = ({
   username,
   eventSlug,
@@ -377,7 +380,7 @@ const BookerComponent = ({
                   isMobile={isMobile}
                   nextSlots={nextSlots}
                   renderOverlay={() => {
-                    if (isEmbed) return null;
+                    if (isEmbed || PRBOOK_HIDE_OVERLAY_CALENDAR) return null; // paperrocket-book: hidden on the full page too
                     return (
                       <OverlayCalendar
                         isOverlayCalendarEnabled={isOverlayCalendarEnabled}

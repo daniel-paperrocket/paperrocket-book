@@ -30,6 +30,12 @@ export async function getDefaultLocations(user: User): Promise<EventTypeLocation
     return [{ type: locationType, link: defaultConferencingData.appLink }];
   }
 
+  // paperrocket-book: server-wide default location for new event types, used when the user has not chosen a default app
+  const prDefaultLocation = process.env.PR_DEFAULT_LOCATION;
+  if (prDefaultLocation) {
+    return [{ type: prDefaultLocation }];
+  }
+
   const appKeys = await getAppKeysFromSlug("daily-video");
 
   if (typeof appKeys.api_key === "string") {

@@ -85,3 +85,12 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 
 ## Turbo env pass-through (13 Nov)
 - `turbo.json`: `PR_*` added to `globalEnv`. The image starts the app with `yarn start`, which runs turbo, and turbo strict env mode only passes the variables it lists. Without this every `PR_*` setting (email name, brand colour, logo, footer lines, default location, limiter switch) was silently ignored at runtime. Found in the preview on 13 Nov.
+
+## Footer, NZ dates, brand files (15 Nov, PAP-1492)
+- `packages/emails/src/components/BaseEmailHtml.tsx`: the footer (name, company, footer lines, reply note, site link) always shows. `hideLogo` (set for platform clients and `hideBranding`) used to hide it, so those emails had no footer lines.
+- New: `packages/lib/paperrocketDate.ts` (`formatNzRange`) and its test. One NZ formatter, "Monday 16 November 2026, 4.45 to 5.00pm" (24-hour: "16.45 to 17.00").
+- `packages/emails/templates/attendee-scheduled-email.ts` and `packages/emails/lib/utils/date-formatting.ts`: `getFormattedDate()` uses it. This is the `{{date}}` in every email subject (cancel, reschedule, request, reminder), so subjects no longer read "4:45pm - 5:00pm, Monday, November 16, 2026".
+- `packages/emails/src/components/WhenInfo.tsx`: uses the same formatter instead of its own copy.
+- `apps/web/modules/bookings/views/bookings-single-view.tsx`: the When block on the booking success page (single and recurring) uses it, on one line, timezone after it.
+- Not changed: SMS text, the booker's slot list, and the "complete your booking" title (still uses the long localised date).
+- `.github/workflows/paperrocket-check.yml`: runs `packages/lib/paperrocketDate.test.ts` too.

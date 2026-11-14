@@ -192,8 +192,8 @@ export const BaseEmailHtml = (props: {
                   color: PR_COLOURS.label,
                   textAlign: "center",
                 }}>
-                {!props.hideLogo && (
-                  <>
+                {/* paperrocket-book: the footer always shows; hideLogo (platform clients, hideBranding) no longer hides it */}
+                <>
                     <div style={{ fontSize: 13, fontWeight: 600, color: PR_COLOURS.ink }}>
                       {getLetterheadName()}
                     </div>
@@ -211,7 +211,6 @@ export const BaseEmailHtml = (props: {
                       </a>
                     </div>
                   </>
-                )}
               </td>
             </tr>
           </tbody>

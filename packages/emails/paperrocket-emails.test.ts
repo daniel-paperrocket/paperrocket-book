@@ -133,3 +133,29 @@ describe("paperrocket-book wording", () => {
     }
   });
 });
+
+describe("paperrocket-book footer and NZ dates (PAP-1492)", () => {
+  it("keeps the footer when hideLogo is set (platform client or hideBranding)", async () => {
+    for (const flag of [{ hideBranding: true }, { platformClientId: "client-1" }]) {
+      const html = await render("AttendeeScheduledEmail", {
+        calEvent: { ...(calEvent as object), ...flag },
+        attendee: maria,
+      });
+      expect(html).toContain("Test Company Ltd");
+      expect(html).toContain("1 Example Street, Wanaka");
+      expect(html).toContain("Questions? Reply to this email.");
+    }
+  });
+
+  it("gives the cancel email subject NZ format with no 12-hour dash form", async () => {
+    const { default: AttendeeCancelledEmail } = await import("./templates/attendee-cancelled-email");
+    const mail = new AttendeeCancelledEmail(calEvent, maria);
+    const date = mail.getFormattedDate();
+    expect(date).toBe("Friday 20 November 2026, 2.00 to 2.30pm");
+    const payload = (await (mail as unknown as { getNodeMailerPayload(): Promise<{ subject: string }> }).getNodeMailerPayload()) as {
+      subject: string;
+    };
+    expect(payload.subject).toContain("Friday 20 November 2026, 2.00 to 2.30pm");
+    expect(payload.subject).not.toMatch(/\d:\d\d(am|pm) - /);
+  });
+});

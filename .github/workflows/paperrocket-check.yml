@@ -38,10 +38,10 @@ jobs:
       - name: Type-check touched packages
         run: yarn turbo run type-check:ci --filter=@calcom/web --filter=@calcom/app-store --log-prefix=none
 
-      # Our unit tests: letterhead and wording for every booking email, and the local login limiter.
+      # Our unit tests: letterhead and wording for every booking email, the local login limiter and the OIDC sign-in callback.
       # Each email is also written out as HTML and uploaded, so it can be looked at.
-      - name: Test emails and rate limiter
-        run: yarn vitest run packages/emails/paperrocket-emails.test.ts packages/lib/rateLimit.local.test.ts
+      - name: Test emails, rate limiter and OIDC sign-in
+        run: yarn vitest run packages/emails/paperrocket-emails.test.ts packages/lib/rateLimit.local.test.ts packages/features/auth/lib/next-auth-options.test.ts
         env:
           TZ: UTC
           PR_SNAPSHOT_DIR: ${{ runner.temp }}/email-snapshots

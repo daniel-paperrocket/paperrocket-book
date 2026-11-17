@@ -356,12 +356,15 @@ if (oidcConfig) {
     // Safe because signIn below only lets in a user whose email the provider says is verified.
     allowDangerousEmailAccountLinking: true,
     profile(profile: { sub: string; name?: string; preferred_username?: string; email?: string; picture?: string }) {
+      // next-auth keeps the provider's `sub` here as the account id; Cal's augmented User types `id` as the
+      // numeric Prisma id, so cast (the Azure provider above returns the same string `sub`). signIn below
+      // matches the Cal user by verified email and the jwt callback resolves the session user by email.
       return {
         id: profile.sub,
         name: profile.name ?? profile.preferred_username ?? null,
         email: profile.email,
         image: profile.picture ?? null,
-      };
+      } as unknown as User;
     },
   });
 }

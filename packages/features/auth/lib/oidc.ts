@@ -16,10 +16,31 @@ export const isOidcSignupAllowed = () => process.env.OIDC_ALLOW_SIGNUP === "true
 
 export const isPasswordLoginDisabled = () => process.env.DISABLE_PASSWORD_LOGIN === "true";
 
+let warnedLogo = false;
+/** Only an https: URL is used as the button logo; anything else is treated as unset (and warned about once). */
+export const getOidcLogoUrl = (): string | null => {
+  const raw = (process.env.OIDC_PROVIDER_LOGO_URL || "").trim();
+  if (!raw) return null;
+  let ok = false;
+  try {
+    ok = new URL(raw).protocol === "https:";
+  } catch {
+    ok = false;
+  }
+  if (!ok) {
+    if (!warnedLogo) {
+      warnedLogo = true;
+      console.warn("[oidc] OIDC_PROVIDER_LOGO_URL is not a valid https: URL, so no logo is shown.");
+    }
+    return null;
+  }
+  return raw;
+};
+
 /** Safe to send to the browser: never includes the client secret. */
 export const getOidcPublicProps = () => ({
   isOidcLoginEnabled: isOidcEnabled(),
   oidcProviderLabel: (process.env.OIDC_PROVIDER_LABEL || "").trim() || null,
-  oidcProviderLogoUrl: (process.env.OIDC_PROVIDER_LOGO_URL || "").trim() || null,
+  oidcProviderLogoUrl: getOidcLogoUrl(),
   isPasswordLoginDisabled: isPasswordLoginDisabled(),
 });

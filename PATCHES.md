@@ -70,13 +70,15 @@ A generic OpenID Connect login (built for Keycloak), driven only by env. No sche
 - `packages/features/auth/lib/oidc.ts` (new): reads the env, builds the props the login page needs. The secret never leaves the server.
 - `packages/features/auth/lib/next-auth-options.ts`: an `oidc` provider (`type: "oauth"`, `wellKnown`, `idToken`, PKCE and state) added when `OIDC_ISSUER`, `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are set. In `signIn` a dedicated branch for `oidc` runs before the Google/SAML/Azure logic: it needs `email_verified: true`, finds the user by email (case-insensitive), refuses locked users, and does not change `identityProvider` (the enum has no OIDC value; reusing SAML would mislabel the user). The jwt callback already falls back to its email auto-merge for a provider it does not know. New users only when `OIDC_ALLOW_SIGNUP=true` (next-auth's adapter then creates them as `CAL` users). Two-factor is not asked: the provider owns it. `authorizeCredentials` throws when `DISABLE_PASSWORD_LOGIN=true`.
 - `apps/web/server/lib/auth/login/getServerSideProps.tsx`: passes the public props.
-- `apps/web/modules/auth/login-view.tsx`: OIDC button (same Button as Google, optional logo), and with `DISABLE_PASSWORD_LOGIN` the form, "Forgot" link and divider are hidden.
+- `apps/web/app/(use-page-wrapper)/auth/forgot-password/[id]/page.tsx`: redirects to `/auth/login` when `DISABLE_PASSWORD_LOGIN=true`. `OIDC_PROVIDER_LOGO_URL` is used only when it is an https: URL (`getOidcLogoUrl` in `oidc.ts`).
+- `apps/web/modules/auth/login-view.tsx`: also hides the sign-up link when password login is disabled. OIDC button (same Button as Google, optional logo), and with `DISABLE_PASSWORD_LOGIN` the form, "Forgot" link and divider are hidden.
 - `apps/web/modules/auth/hooks/useLastUsed.tsx`: `"oidc"` added to the type.
 - `apps/web/app/(use-page-wrapper)/auth/error/page.tsx`: message for `error=oidc-no-account`.
 - `packages/i18n/locales/en/common.json`: `oidc_signin_with`, `oidc_signin_fallback`, `oidc_no_account_error`.
 - Env (runtime, server): `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_PROVIDER_LABEL`, `OIDC_PROVIDER_LOGO_URL`, `OIDC_ALLOW_SIGNUP`, `DISABLE_PASSWORD_LOGIN`. Documented in `.env.example`.
 - With `DISABLE_PASSWORD_LOGIN=true` the magic-link `EmailProvider` is left out of the providers list (the server refuses it), and the forgot-password and reset-password pages and APIs and the signup page and API (team-invite tokens included) and the first-admin setup page and API (403 even with no users) are closed; make the first admin by starting once with the flag unset, so the OIDC button is the only way in (Google and Microsoft stay governed by their own env).
 - OIDC sign-ins skip Cal's own two-factor check, because the identity provider (Keycloak) is responsible for two-factor.
+- OIDC email linking is only as safe as the identity provider's `email_verified` claim: on the Keycloak realm self-registration must stay off, and no brokered identity provider (Google, Microsoft) may have "Trust email" on.
 - OIDC sign-in matches only existing users by verified email; `OIDC_ALLOW_SIGNUP=true` is the only way to create users through it.
 - Not compiled or run locally.
 

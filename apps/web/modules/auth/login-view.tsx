@@ -177,8 +177,11 @@ export default function Login({
   // paperrocket-book: with DISABLE_PASSWORD_LOGIN the page shows only the provider buttons.
   const showPasswordForm = !isPasswordLoginDisabled;
   const showSocialLogin = isGoogleLoginEnabled || isOutlookLoginEnabled || isOidcLoginEnabled;
+  // paperrocket-book: no sign-up link when password login is disabled (the page shows only the OIDC button).
   const showSignupLink =
-    process.env.NEXT_PUBLIC_DISABLE_SIGNUP !== "true" && searchParams?.get("register") !== "false";
+    !isPasswordLoginDisabled &&
+    process.env.NEXT_PUBLIC_DISABLE_SIGNUP !== "true" &&
+    searchParams?.get("register") !== "false";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-default/80 px-4 py-10">

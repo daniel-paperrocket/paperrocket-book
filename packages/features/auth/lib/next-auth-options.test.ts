@@ -1287,3 +1287,56 @@ describe("Azure AD JWT callback", () => {
     });
   });
 });
+
+describe("OIDC signIn callback", () => {
+  let signInCallback: any;
+  const base = {
+    user: { id: "sub-1", email: "Person@Example.com", name: "Person", emailVerified: null } as any,
+    account: { provider: "oidc", providerAccountId: "sub-1", type: "oauth" as const },
+    credentials: undefined,
+    email: undefined,
+  };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    delete process.env.OIDC_ALLOW_SIGNUP;
+    const prismaModule = await import("@calcom/prisma");
+    (prismaModule as any).default.user = { findFirst: mockPrismaUserFindFirst, create: mockPrismaUserCreate };
+    mockPrismaUserFindFirst.mockResolvedValue(null);
+    const { getOptions } = await import("./next-auth-options");
+    signInCallback = getOptions({ getDubId: () => undefined, getTrackingData: () => ({}) as any }).callbacks!
+      .signIn!;
+  });
+
+  it("refuses an unverified email", async () => {
+    const result = await signInCallback({ ...base, user: { ...base.user }, profile: { email_verified: false } });
+    expect(result).toBe("/auth/error?error=unverified-email");
+    expect(mockPrismaUserFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown email when sign-up is off", async () => {
+    const result = await signInCallback({ ...base, user: { ...base.user }, profile: { email_verified: true } });
+    expect(result).toBe("/auth/error?error=oidc-no-account");
+  });
+
+  it("refuses a locked user", async () => {
+    mockPrismaUserFindFirst.mockResolvedValue({ email: "person@example.com", locked: true });
+    const result = await signInCallback({ ...base, user: { ...base.user }, profile: { email_verified: true } });
+    expect(result).toBe("/auth/error?error=oidc-no-account");
+  });
+
+  it("lets an existing user in and uses the stored email", async () => {
+    mockPrismaUserFindFirst.mockResolvedValue({ email: "person@example.com", locked: false });
+    const user = { ...base.user };
+    const result = await signInCallback({ ...base, user, profile: { email_verified: true } });
+    expect(result).toBe(true);
+    expect(user.email).toBe("person@example.com");
+  });
+
+  it("allows a new user when OIDC_ALLOW_SIGNUP=true (the adapter creates them)", async () => {
+    process.env.OIDC_ALLOW_SIGNUP = "true";
+    const result = await signInCallback({ ...base, user: { ...base.user }, profile: { email_verified: true } });
+    expect(result).toBe(true);
+    delete process.env.OIDC_ALLOW_SIGNUP;
+  });
+});

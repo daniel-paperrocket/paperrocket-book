@@ -342,6 +342,12 @@ if (IS_GOOGLE_LOGIN_ENABLED) {
 
 // paperrocket-book: generic OpenID Connect provider (for example Keycloak), only when the three env vars are set.
 const oidcConfig = getOidcConfig();
+if (!oidcConfig && process.env.DISABLE_PASSWORD_LOGIN === "true") {
+  // Nobody could sign in: password login is off and the OIDC provider is not fully configured.
+  log.warn(
+    "DISABLE_PASSWORD_LOGIN=true but OIDC_ISSUER, OIDC_CLIENT_ID or OIDC_CLIENT_SECRET is missing: nobody can sign in."
+  );
+}
 if (oidcConfig) {
   providers.push({
     id: OIDC_PROVIDER_ID,

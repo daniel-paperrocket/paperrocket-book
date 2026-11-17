@@ -56,7 +56,7 @@ jobs:
       # Our unit tests: letterhead and wording for every booking email, the local login limiter, NZ date formats and the OIDC sign-in callback.
       # Each email is also written out as HTML and uploaded, so it can be looked at.
       - name: Test emails, rate limiter, NZ dates and OIDC sign-in
-        run: yarn vitest run packages/emails/paperrocket-emails.test.ts packages/lib/rateLimit.local.test.ts packages/lib/paperrocketDate.test.ts packages/features/auth/lib/next-auth-options.test.ts packages/features/bookings/lib/paperrocketPrivateLink.test.ts apps/web/app/api/logo/readPublicLogo.test.ts
+        run: yarn vitest run packages/emails/paperrocket-emails.test.ts packages/lib/rateLimit.local.test.ts packages/lib/paperrocketDate.test.ts packages/features/auth/lib/next-auth-options.test.ts packages/features/bookings/lib/paperrocketPrivateLink.test.ts apps/web/app/api/logo/readPublicLogo.test.ts packages/features/auth/lib/oidc.test.ts
         env:
           TZ: UTC
           PR_SNAPSHOT_DIR: ${{ runner.temp }}/email-snapshots

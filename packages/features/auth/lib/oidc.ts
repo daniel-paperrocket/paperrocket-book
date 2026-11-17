@@ -53,6 +53,12 @@ export const getLoginLogoUrl = (): string | null => {
   }
 };
 
+/** paperrocket-book: background of the OIDC button, from PR_LOGIN_BUTTON_COLOR (#rrggbb, white text). Else the theme colour. */
+export const getLoginButtonColor = (): string | null => {
+  const raw = (process.env.PR_LOGIN_BUTTON_COLOR || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : null;
+};
+
 /** Safe to send to the browser: never includes the client secret. */
 export const getOidcPublicProps = () => ({
   isOidcLoginEnabled: isOidcEnabled(),
@@ -60,4 +66,5 @@ export const getOidcPublicProps = () => ({
   oidcProviderLogoUrl: getOidcLogoUrl(),
   isPasswordLoginDisabled: isPasswordLoginDisabled(),
   loginLogoUrl: getLoginLogoUrl(),
+  loginButtonColor: getLoginButtonColor(),
 });

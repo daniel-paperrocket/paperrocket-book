@@ -109,6 +109,7 @@ export default function Login({
   oidcProviderLogoUrl,
   isPasswordLoginDisabled,
   loginLogoUrl,
+  loginButtonColor,
   totpEmail,
 }: PageProps) {
   const searchParams = useCompatSearchParams();
@@ -218,6 +219,12 @@ export default function Login({
                       className="h-auto min-h-11 w-full whitespace-normal py-2 sm:h-auto"
                       disabled={formState.isSubmitting}
                       data-testid="oidc"
+                      // paperrocket-book: PR_LOGIN_BUTTON_COLOR, white text
+                      style={
+                        loginButtonColor
+                          ? { backgroundColor: loginButtonColor, borderColor: loginButtonColor, color: "#ffffff" }
+                          : undefined
+                      }
                       onClick={async (e) => {
                         e.preventDefault();
                         setLastUsed("oidc");

@@ -64,6 +64,19 @@ Upstream only rate-limits when `UNKEY_ROOT_KEY` is set. Without it every limit (
 - `packages/lib/rateLimit.ts`: when `UNKEY_ROOT_KEY` is unset, `rateLimiter()` returns an in-memory fixed-window limiter with the same limits as the Unkey ones (login is `core`: 10 a minute per hashed email). Off in tests and when `PR_LOCAL_RATE_LIMIT=false`. Counts live in the Node process: a restart clears them, and Next may hold one copy per server bundle, so the real ceiling can be a small multiple. The Cloudflare rate limit rule on `book` login stays as the outer layer.
 - New: `packages/lib/rateLimit.local.test.ts`.
 
+## OIDC sign-in (patch set 3)
+
+A generic OpenID Connect login (built for Keycloak), driven only by env. No schema change, no client name or host in the repo.
+- `packages/features/auth/lib/oidc.ts` (new): reads the env, builds the props the login page needs. The secret never leaves the server.
+- `packages/features/auth/lib/next-auth-options.ts`: an `oidc` provider (`type: "oauth"`, `wellKnown`, `idToken`, PKCE and state) added when `OIDC_ISSUER`, `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are set. In `signIn` a dedicated branch for `oidc` runs before the Google/SAML/Azure logic: it needs `email_verified: true`, finds the user by email (case-insensitive), refuses locked users, and does not change `identityProvider` (the enum has no OIDC value; reusing SAML would mislabel the user). The jwt callback already falls back to its email auto-merge for a provider it does not know. New users only when `OIDC_ALLOW_SIGNUP=true` (next-auth's adapter then creates them as `CAL` users). Two-factor is not asked: the provider owns it. `authorizeCredentials` throws when `DISABLE_PASSWORD_LOGIN=true`.
+- `apps/web/server/lib/auth/login/getServerSideProps.tsx`: passes the public props.
+- `apps/web/modules/auth/login-view.tsx`: OIDC button (same Button as Google, optional logo), and with `DISABLE_PASSWORD_LOGIN` the form, "Forgot" link and divider are hidden.
+- `apps/web/modules/auth/hooks/useLastUsed.tsx`: `"oidc"` added to the type.
+- `apps/web/app/(use-page-wrapper)/auth/error/page.tsx`: message for `error=oidc-no-account`.
+- `packages/i18n/locales/en/common.json`: `oidc_signin_with`, `oidc_signin_fallback`, `oidc_no_account_error`.
+- Env (runtime, server): `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_PROVIDER_LABEL`, `OIDC_PROVIDER_LOGO_URL`, `OIDC_ALLOW_SIGNUP`, `DISABLE_PASSWORD_LOGIN`. Documented in `.env.example`.
+- Not covered: the email magic-link provider (`EmailProvider`) is untouched and is another way in for existing users; not checked whether it is reachable in this build. Not compiled or run locally.
+
 ## Upstream workflows removed
 
 Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The other 50 upstream workflows under `.github/workflows/` are deleted (13 Nov 2026, as paperrocket-sign did): they need secrets we do not have. On a rebase, if upstream changes one of them, keep it deleted. `.github/actions/` is left in place.

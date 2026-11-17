@@ -60,8 +60,17 @@ export const formatEventFromToTime = ({
     : startDate;
   if (isEnglish(language)) {
     const is24h = timeFormat !== TimeFormat.TWELVE_HOUR;
+    const startDay = formatNzDate({ date: startDate, timeZone });
+    const endDay = formatNzDate({ date: endDate, timeZone });
+    if (startDay !== endDay) {
+      // Crosses midnight: both dates, each with its time.
+      return {
+        date: `${startDay} to ${endDay}`,
+        time: `${formatNzTime({ date: startDate, timeZone, is24h })} to ${formatNzTime({ date: endDate, timeZone, is24h })}`,
+      };
+    }
     return {
-      date: formatNzDate({ date: startDate, timeZone }),
+      date: startDay,
       time: formatNzTimeRange({ start: startDate, end: endDate, timeZone, is24h }),
     };
   }

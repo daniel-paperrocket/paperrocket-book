@@ -580,6 +580,8 @@ async function handler(
     eventTypeId: eventType.id,
     hashedLink: hasHashedBookingLink ? (reqBody.hashedLink ?? null) : null,
     rescheduleUid: rawBookingData.rescheduleUid ?? null,
+    viewerUserId: userId ?? null,
+    laterRecurringSlot: !!rawBookingData.allRecurringDates && rawBookingData.isFirstRecurringSlot === false,
   });
 
   let troubleshooterData = buildTroubleshooterData({

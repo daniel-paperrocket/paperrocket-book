@@ -264,11 +264,14 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
   }
 
   // paperrocket-book: a hidden event type with private links is only reachable through /d/<link>/<slug>,
-  // or to reschedule one of its own bookings.
+  // to reschedule or join (seats) one of its own bookings, or by its owner.
+  const ownBookingUid =
+    typeof rescheduleUid === "string" ? rescheduleUid : typeof bookingUid === "string" ? bookingUid : null;
   if (
     !(await canBookEventType({
       eventTypeId: eventData.id,
-      rescheduleUid: typeof rescheduleUid === "string" ? rescheduleUid : null,
+      rescheduleUid: ownBookingUid,
+      viewerUserId: session?.user?.id ?? null,
     }))
   ) {
     return {

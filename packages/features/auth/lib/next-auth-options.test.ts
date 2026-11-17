@@ -1368,6 +1368,12 @@ describe("OIDC provider and sign-up email (pr.7)", () => {
     expect(arg.data.emailVerified).toBeInstanceOf(Date);
   });
 
+  it("accepts the adapter's string id", async () => {
+    const { markOidcUserEmailVerified } = await import("./next-auth-options");
+    await markOidcUserEmailVerified({ user: { id: "7", emailVerified: null }, account: { provider: "oidc" } });
+    expect(mockUserUpdate.mock.calls[0][0].where).toEqual({ id: 7 });
+  });
+
   it("leaves other providers and already verified users alone", async () => {
     const { markOidcUserEmailVerified } = await import("./next-auth-options");
     await markOidcUserEmailVerified({ user: { id: 7, emailVerified: null }, account: { provider: "google" } });

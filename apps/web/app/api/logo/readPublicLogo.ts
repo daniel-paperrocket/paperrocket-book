@@ -14,7 +14,7 @@ const CONTENT_TYPES: Record<string, string> = {
 /**
  * Given a fallback URL on our own WEBAPP_URL (for example https://host/favicon-32x32.png), returns
  * the file from public/ on disk, or null when it is not ours, not an image we know, or not found.
- * Only plain file names under public/ are served: no "..", no subfolders outside public/.
+ * Only files inside public/ are served: anything that resolves outside it ("..") is refused.
  */
 export async function readPublicLogo(
   url: string,

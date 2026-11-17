@@ -16,7 +16,9 @@ type PrivateLink = {
 
 export type PrivateLinkDeps = {
   /** null when the event type does not exist */
-  findEventTypeAccess: (eventTypeId: number) => Promise<{ hidden: boolean; links: PrivateLink[] } | null>;
+  findEventTypeAccess: (
+    eventTypeId: number
+  ) => Promise<{ hidden: boolean; ownerId: number | null; links: PrivateLink[] } | null>;
   /** the event type of the booking (or booking seat) being rescheduled, or null */
   findRescheduledEventTypeId: (uid: string) => Promise<number | null>;
 };
@@ -27,10 +29,13 @@ export const prismaPrivateLinkDeps: PrivateLinkDeps = {
       where: { id: eventTypeId },
       select: {
         hidden: true,
+        userId: true,
         hashedLink: { select: { link: true, expiresAt: true, maxUsageCount: true, usageCount: true } },
       },
     });
-    return eventType ? { hidden: eventType.hidden, links: eventType.hashedLink } : null;
+    return eventType
+      ? { hidden: eventType.hidden, ownerId: eventType.userId ?? null, links: eventType.hashedLink }
+      : null;
   },
   findRescheduledEventTypeId: async (uid) => {
     const booking = await prisma.booking.findUnique({ where: { uid }, select: { eventTypeId: true } });
@@ -43,26 +48,40 @@ export const prismaPrivateLinkDeps: PrivateLinkDeps = {
   },
 };
 
+type CanBookInput = {
+  eventTypeId: number;
+  hashedLink?: string | null;
+  rescheduleUid?: string | null;
+  viewerUserId?: number | null;
+  laterRecurringSlot?: boolean;
+};
+
 /**
  * true when this request may book the event type:
  * - it is not hidden, or it is hidden but has no private links (upstream behaviour), or
  * - it carries one of the event type's own private links that has not expired
  *   (maxUsageCount 0 or null means unlimited, as upstream), or
- * - it reschedules an existing booking of this same event type (the reschedule link in the email).
+ * - it reschedules an existing booking of this same event type (the reschedule link in the email), or
+ * - the signed-in user owns the event type (its Preview button and copied links).
+ * laterRecurringSlot: slots 2 onwards of a recurring series. Slot 1 already counted against the link's
+ * usage limit, so for these only the link itself is checked, not its usage count (a link is still needed).
  */
 export async function canBookEventType(
   {
     eventTypeId,
     hashedLink,
     rescheduleUid,
-  }: { eventTypeId: number; hashedLink?: string | null; rescheduleUid?: string | null },
+    viewerUserId,
+    laterRecurringSlot = false,
+  }: CanBookInput,
   deps: PrivateLinkDeps = prismaPrivateLinkDeps
 ): Promise<boolean> {
   const access = await deps.findEventTypeAccess(eventTypeId);
   if (!access || !access.hidden || access.links.length === 0) return true;
+  if (viewerUserId && access.ownerId === viewerUserId) return true;
   if (hashedLink) {
     const match = access.links.find((l) => l.link === hashedLink);
-    if (match && !isLinkExpired(match)) return true;
+    if (match && !isLinkExpired(laterRecurringSlot ? { ...match, maxUsageCount: 0 } : match)) return true;
   }
   if (rescheduleUid) {
     const rescheduledEventTypeId = await deps.findRescheduledEventTypeId(rescheduleUid);
@@ -73,7 +92,7 @@ export async function canBookEventType(
 
 /** For the booking service: throws a 403 when canBookEventType says no. */
 export async function assertCanBookEventType(
-  input: { eventTypeId: number; hashedLink?: string | null; rescheduleUid?: string | null },
+  input: CanBookInput,
   deps: PrivateLinkDeps = prismaPrivateLinkDeps
 ) {
   if (!(await canBookEventType(input, deps))) {

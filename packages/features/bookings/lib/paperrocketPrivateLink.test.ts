@@ -19,10 +19,10 @@ const link = (over: Partial<{ link: string; expiresAt: Date | null; maxUsageCoun
 });
 
 const deps = (
-  access: Awaited<ReturnType<PrivateLinkDeps["findEventTypeAccess"]>>,
+  access: { hidden: boolean; links: ReturnType<typeof link>[]; ownerId?: number | null } | null,
   rescheduled: Record<string, number> = {}
 ): PrivateLinkDeps => ({
-  findEventTypeAccess: vi.fn(async () => access),
+  findEventTypeAccess: vi.fn(async () => (access ? { ownerId: null, ...access } : null)),
   findRescheduledEventTypeId: vi.fn(async (uid: string) => rescheduled[uid] ?? null),
 });
 
@@ -67,6 +67,30 @@ describe("canBookEventType", () => {
     expect(await canBookEventType({ eventTypeId: 2, rescheduleUid: "same-uid" }, d)).toBe(true);
     expect(await canBookEventType({ eventTypeId: 2, rescheduleUid: "other-uid" }, d)).toBe(false);
     expect(await canBookEventType({ eventTypeId: 2, rescheduleUid: "missing" }, d)).toBe(false);
+  });
+});
+
+describe("canBookEventType, review fixes", () => {
+  it("lets the owner see their own hidden event type, nobody else", async () => {
+    const d = deps({ hidden: true, links: [link()], ownerId: 5 });
+    expect(await canBookEventType({ eventTypeId: 2, viewerUserId: 5 }, d)).toBe(true);
+    expect(await canBookEventType({ eventTypeId: 2, viewerUserId: 6 }, d)).toBe(false);
+    expect(await canBookEventType({ eventTypeId: 2, viewerUserId: null }, d)).toBe(false);
+  });
+
+  it("books slots 2 onwards of a recurring series after slot 1 used up a single-use link", async () => {
+    const usedUp = deps({ hidden: true, links: [link({ maxUsageCount: 1, usageCount: 1 })] });
+    expect(await canBookEventType({ eventTypeId: 2, hashedLink: "staff-link" }, usedUp)).toBe(false);
+    expect(await canBookEventType({ eventTypeId: 2, hashedLink: "staff-link", laterRecurringSlot: true }, usedUp)).toBe(true);
+    // still needs the right link, and a time-expired link stays refused
+    expect(await canBookEventType({ eventTypeId: 2, hashedLink: "guess", laterRecurringSlot: true }, usedUp)).toBe(false);
+    const past = new Date(Date.now() - 86_400_000);
+    expect(
+      await canBookEventType(
+        { eventTypeId: 2, hashedLink: "staff-link", laterRecurringSlot: true },
+        deps({ hidden: true, links: [link({ expiresAt: past })] })
+      )
+    ).toBe(false);
   });
 });
 

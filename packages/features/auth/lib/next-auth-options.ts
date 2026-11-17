@@ -395,14 +395,17 @@ if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
   );
 }
 
-providers.push(
-  EmailProvider({
-    type: "email",
-    maxAge: 10 * 60 * 60, // Magic links are valid for 10 min only
-    // Here we setup the sendVerificationRequest that calls the email template with the identifier (email) and token to verify.
-    sendVerificationRequest: async (props) => (await import("./sendVerificationRequest")).default(props),
-  })
-);
+// paperrocket-book: with DISABLE_PASSWORD_LOGIN=true the magic-link provider is left out, so the server refuses it.
+if (process.env.DISABLE_PASSWORD_LOGIN !== "true") {
+  providers.push(
+    EmailProvider({
+      type: "email",
+      maxAge: 10 * 60 * 60, // Magic links are valid for 10 min only
+      // Here we setup the sendVerificationRequest that calls the email template with the identifier (email) and token to verify.
+      sendVerificationRequest: async (props) => (await import("./sendVerificationRequest")).default(props),
+    })
+  );
+}
 
 function isNumber(n: string) {
   return !Number.isNaN(parseFloat(n)) && !Number.isNaN(+n);

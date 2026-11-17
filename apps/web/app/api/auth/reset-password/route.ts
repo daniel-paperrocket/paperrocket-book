@@ -22,6 +22,10 @@ const passwordResetRequestSchema = z.object({
 });
 
 async function handler(req: NextRequest) {
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    return NextResponse.json({ message: "Disabled" }, { status: 403 });
+  }
   const body = await parseRequestData(req);
   const {
     password: rawPassword,

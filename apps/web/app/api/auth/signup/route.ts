@@ -37,6 +37,10 @@ async function ensureSignupIsEnabled(body: Record<string, string>) {
 }
 
 async function handler(req: NextRequest) {
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    return NextResponse.json({ message: "Disabled" }, { status: 403 });
+  }
   const remoteIp = getIP(req);
   // Use a try catch instead of returning res every time
   try {

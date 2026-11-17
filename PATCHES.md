@@ -75,7 +75,10 @@ A generic OpenID Connect login (built for Keycloak), driven only by env. No sche
 - `apps/web/app/(use-page-wrapper)/auth/error/page.tsx`: message for `error=oidc-no-account`.
 - `packages/i18n/locales/en/common.json`: `oidc_signin_with`, `oidc_signin_fallback`, `oidc_no_account_error`.
 - Env (runtime, server): `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_PROVIDER_LABEL`, `OIDC_PROVIDER_LOGO_URL`, `OIDC_ALLOW_SIGNUP`, `DISABLE_PASSWORD_LOGIN`. Documented in `.env.example`.
-- Not covered: the email magic-link provider (`EmailProvider`) is untouched and is another way in for existing users; not checked whether it is reachable in this build. Not compiled or run locally.
+- With `DISABLE_PASSWORD_LOGIN=true` the magic-link `EmailProvider` is left out of the providers list (the server refuses it), and the forgot-password and reset-password pages and APIs and the signup page and API are closed, so the OIDC button is the only way in (Google and Microsoft stay governed by their own env).
+- OIDC sign-ins skip Cal's own two-factor check, because the identity provider (Keycloak) is responsible for two-factor.
+- OIDC sign-in matches only existing users by verified email; `OIDC_ALLOW_SIGNUP=true` is the only way to create users through it.
+- Not compiled or run locally.
 
 ## Upstream workflows removed
 

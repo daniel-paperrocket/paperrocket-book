@@ -41,6 +41,8 @@ type BookEventFormProps = {
     backButton?: string;
   };
   timeslot: string | null;
+  // paperrocket-book: PR_HIDE_BOOKER_TERMS
+  hideTerms?: boolean;
 };
 
 export const BookEventForm = ({
@@ -60,6 +62,7 @@ export const BookEventForm = ({
   confirmButtonDisabled,
   classNames,
   timeslot,
+  hideTerms = false,
 }: Omit<BookEventFormProps, "event"> & {
   eventQuery: {
     isError: boolean;
@@ -174,7 +177,8 @@ export const BookEventForm = ({
           </div>
         ) : null}
 
-        {!isPlatform && (
+        {/* paperrocket-book: hidden with PR_HIDE_BOOKER_TERMS=true */}
+        {!isPlatform && !hideTerms && (
           <div className="my-3 w-full text-xs text-subtle">
             <ServerTrans
               t={t}

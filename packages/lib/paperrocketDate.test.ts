@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatNzRange } from "./paperrocketDate";
+import { formatNzDate, formatNzRange, formatNzTime, formatNzTimeRange } from "./paperrocketDate";
 
 describe("formatNzRange", () => {
   it("formats the example from PAP-1492", () => {
@@ -21,5 +21,23 @@ describe("formatNzRange", () => {
     expect(
       formatNzRange({ start: "2026-11-16T03:45:00.000Z", end: "2026-11-16T04:00:00.000Z", timeZone: "Pacific/Auckland", is24h: true })
     ).toBe("Monday 16 November 2026, 16.45 to 17.00");
+  });
+});
+
+describe("NZ date and time parts (booking page)", () => {
+  // 19 Nov 2026 09:00 NZDT = 18 Nov 20:00Z
+  const start = "2026-11-18T20:00:00.000Z";
+  const end = "2026-11-18T21:00:00.000Z";
+  const timeZone = "Pacific/Auckland";
+  it("formats the date the NZ way, not 'Thursday, November 19, 2026'", () => {
+    expect(formatNzDate({ date: start, timeZone })).toBe("Thursday 19 November 2026");
+  });
+  it("formats one time", () => {
+    expect(formatNzTime({ date: start, timeZone })).toBe("9.00am");
+    expect(formatNzTime({ date: start, timeZone, is24h: true })).toBe("09.00");
+  });
+  it("formats a time range, and a zero-length range as one time", () => {
+    expect(formatNzTimeRange({ start, end, timeZone })).toBe("9.00 to 10.00am");
+    expect(formatNzTimeRange({ start, end: start, timeZone })).toBe("9.00am");
   });
 });

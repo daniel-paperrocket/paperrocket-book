@@ -1340,3 +1340,39 @@ describe("OIDC signIn callback", () => {
     delete process.env.OIDC_ALLOW_SIGNUP;
   });
 });
+
+describe("OIDC provider and sign-up email (pr.7)", () => {
+  const mockUserUpdate = vi.fn();
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const prismaModule = await import("@calcom/prisma");
+    (prismaModule as any).default.user = { update: mockUserUpdate };
+  });
+
+  it("waits 10 s for the identity provider, not openid-client's 3.5 s", async () => {
+    const { buildOidcProvider } = await import("./next-auth-options");
+    const provider = buildOidcProvider({ issuer: "https://id.example.test/realms/r", clientId: "c", clientSecret: "s" }) as any;
+    expect(provider.httpOptions).toEqual({ timeout: 10000 });
+    expect(provider.wellKnown).toBe("https://id.example.test/realms/r/.well-known/openid-configuration");
+    expect(provider.checks).toEqual(["pkce", "state"]);
+  });
+
+  it("marks a new OIDC user's email verified when the account is linked", async () => {
+    const { getOptions } = await import("./next-auth-options");
+    const events = getOptions({ getDubId: () => undefined, getTrackingData: () => ({}) as any }).events!;
+    await events.linkAccount!({ user: { id: 7, emailVerified: null }, account: { provider: "oidc" } } as any);
+    expect(mockUserUpdate).toHaveBeenCalledTimes(1);
+    const arg = mockUserUpdate.mock.calls[0][0];
+    expect(arg.where).toEqual({ id: 7 });
+    expect(arg.data.emailVerified).toBeInstanceOf(Date);
+  });
+
+  it("leaves other providers and already verified users alone", async () => {
+    const { markOidcUserEmailVerified } = await import("./next-auth-options");
+    await markOidcUserEmailVerified({ user: { id: 7, emailVerified: null }, account: { provider: "google" } });
+    await markOidcUserEmailVerified({ user: { id: 7, emailVerified: new Date() }, account: { provider: "oidc" } });
+    await markOidcUserEmailVerified({ user: { id: "sub-abc", emailVerified: null }, account: { provider: "oidc" } });
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+});

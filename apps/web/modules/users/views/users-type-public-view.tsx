@@ -24,7 +24,16 @@ export const getMultipleDurationValue = (
   return defaultValue;
 };
 
-function Type({ slug, user, isEmbed, booking, isBrandingHidden, eventData, orgBannerUrl }: PageProps) {
+function Type({
+  slug,
+  user,
+  isEmbed,
+  booking,
+  isBrandingHidden,
+  hideBookerTerms,
+  eventData,
+  orgBannerUrl,
+}: PageProps) {
   const searchParams = useSearchParams();
 
   return (
@@ -35,6 +44,7 @@ function Type({ slug, user, isEmbed, booking, isBrandingHidden, eventData, orgBa
           eventSlug={slug}
           bookingData={booking}
           hideBranding={isBrandingHidden}
+          hideTerms={hideBookerTerms}
           eventData={eventData}
           entity={{ ...eventData.entity, eventTypeId: eventData?.id }}
           durationConfig={eventData.metadata?.multipleDuration}

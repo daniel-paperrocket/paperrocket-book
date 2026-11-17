@@ -1,7 +1,7 @@
 "use client";
 
 import { ErrorCode } from "@calcom/features/auth/lib/ErrorCode";
-import { HOSTED_CAL_FEATURES, WEBAPP_URL, WEBSITE_URL } from "@calcom/lib/constants";
+import { APP_NAME, HOSTED_CAL_FEATURES, WEBAPP_URL, WEBSITE_URL } from "@calcom/lib/constants";
 import { emailRegex } from "@calcom/lib/emailSchema";
 import { getSafeRedirectUrl } from "@calcom/lib/getSafeRedirectUrl";
 import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
@@ -9,7 +9,6 @@ import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { Alert } from "@calcom/ui/components/alert";
 import { Icon } from "@calcom/ui/components/icon";
 import { LastUsed, useLastUsed } from "@calcom/web/modules/auth/hooks/useLastUsed";
-import AddToHomescreen from "@components/AddToHomescreen";
 import BackupCode from "@components/auth/BackupCode";
 import TwoFactor from "@components/auth/TwoFactor";
 import { Button } from "@coss/ui/components/button";
@@ -109,6 +108,7 @@ export default function Login({
   oidcProviderLabel,
   oidcProviderLogoUrl,
   isPasswordLoginDisabled,
+  loginLogoUrl,
   totpEmail,
 }: PageProps) {
   const searchParams = useCompatSearchParams();
@@ -191,8 +191,15 @@ export default function Login({
         {/* Main Card */}
         <div className="w-full rounded-xl border border-subtle bg-default p-10 shadow-sm">
           {/* Logo */}
+          {/* paperrocket-book: brand logo (PR_LOGIN_LOGO_URL) or the app name, never "Cal.diy". */}
           <div className="mb-2 text-center">
-            <h1 className="font-cal text-xl font-bold text-emphasis">Cal.diy</h1>
+            {loginLogoUrl ? (
+              <h1>
+                <img className="mx-auto h-8 w-auto max-w-full" src={loginLogoUrl} alt={APP_NAME} />
+              </h1>
+            ) : (
+              <h1 className="font-cal text-xl font-bold text-emphasis">{APP_NAME}</h1>
+            )}
           </div>
 
           {/* Heading */}
@@ -206,8 +213,9 @@ export default function Login({
               <>
                 <div className="flex flex-col gap-2">
                   {isOidcLoginEnabled && (
+                    // paperrocket-book: the button grows to fit, so a long name wraps inside it with the logo.
                     <Button
-                      className="w-full py-1"
+                      className="h-auto min-h-11 w-full whitespace-normal py-2 sm:h-auto"
                       disabled={formState.isSubmitting}
                       data-testid="oidc"
                       onClick={async (e) => {
@@ -217,8 +225,10 @@ export default function Login({
                           callbackUrl,
                         });
                       }}>
-                      {oidcProviderLogoUrl && <img className="h-5 w-auto" src={oidcProviderLogoUrl} alt="" />}
-                      <span>
+                      {oidcProviderLogoUrl && (
+                        <img className="h-5 w-auto shrink-0" src={oidcProviderLogoUrl} alt="" />
+                      )}
+                      <span className="min-w-0 text-center leading-snug">
                         {oidcProviderLabel
                           ? t("oidc_signin_with", { name: oidcProviderLabel })
                           : t("oidc_signin_fallback")}
@@ -424,7 +434,7 @@ export default function Login({
         )}
       </div>
 
-      <AddToHomescreen />
+      {/* paperrocket-book: no "Add this app to your home screen" banner. */}
     </div>
   );
 }

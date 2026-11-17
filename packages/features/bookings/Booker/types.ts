@@ -50,6 +50,8 @@ export interface BookerProps {
   selectedDate?: Date;
 
   hideBranding?: boolean;
+  /** paperrocket-book: hide the Terms and Privacy line on the booking form (PR_HIDE_BOOKER_TERMS). */
+  hideTerms?: boolean;
   /**
    * If false and the current username indicates a dynamic booking,
    * the Booker will immediately show an error.

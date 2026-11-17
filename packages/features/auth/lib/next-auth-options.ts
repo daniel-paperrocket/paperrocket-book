@@ -348,14 +348,16 @@ if (!oidcConfig && process.env.DISABLE_PASSWORD_LOGIN === "true") {
     "DISABLE_PASSWORD_LOGIN=true but OIDC_ISSUER, OIDC_CLIENT_ID or OIDC_CLIENT_SECRET is missing: nobody can sign in."
   );
 }
-if (oidcConfig) {
-  providers.push({
+// Exported for the tests.
+export const buildOidcProvider = (config: NonNullable<ReturnType<typeof getOidcConfig>>): Provider => ({
     id: OIDC_PROVIDER_ID,
     name: process.env.OIDC_PROVIDER_LABEL || "OpenID Connect",
     type: "oauth",
-    wellKnown: `${oidcConfig.issuer}/.well-known/openid-configuration`,
-    clientId: oidcConfig.clientId,
-    clientSecret: oidcConfig.clientSecret,
+    wellKnown: `${config.issuer}/.well-known/openid-configuration`,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    // openid-client's default is 3.5 s, and the first callback after a cold start timed out on it.
+    httpOptions: { timeout: 10000 },
     idToken: true,
     checks: ["pkce", "state"],
     authorization: { params: { scope: "openid email profile" } },
@@ -372,8 +374,28 @@ if (oidcConfig) {
         image: profile.picture ?? null,
       } as unknown as User;
     },
-  });
+});
+if (oidcConfig) {
+  providers.push(buildOidcProvider(oidcConfig));
 }
+
+/**
+ * paperrocket-book: next-auth creates OAuth sign-up users with emailVerified null, which sends them to
+ * /auth/verify-email. Runs from events.linkAccount, which next-auth fires before the jwt callback. Only
+ * reached after the signIn callback accepted the OIDC sign-in, which needs email_verified: true.
+ */
+export const markOidcUserEmailVerified = async ({
+  user,
+  account,
+}: {
+  user: { id?: string | number; emailVerified?: Date | null };
+  account: { provider?: string } | null;
+}) => {
+  if (account?.provider !== OIDC_PROVIDER_ID || user.emailVerified) return;
+  const id = Number(user.id);
+  if (!Number.isInteger(id)) return;
+  await prisma.user.update({ where: { id }, data: { emailVerified: new Date() } });
+};
 
 if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
   providers.push(
@@ -1249,6 +1271,10 @@ export const getOptions = ({
     },
   },
   events: {
+    // paperrocket-book: OIDC sign-ups are verified by the identity provider.
+    async linkAccount(message) {
+      await markOidcUserEmailVerified(message as Parameters<typeof markOidcUserEmailVerified>[0]);
+    },
     async signIn(message) {
       /* only run this code if:
          - it's a hosted cal account

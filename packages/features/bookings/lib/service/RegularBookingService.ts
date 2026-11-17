@@ -96,6 +96,8 @@ import { ensureAvailableUsers } from "../handleNewBooking/ensureAvailableUsers";
 import { getBookingData } from "../handleNewBooking/getBookingData";
 import { getCustomInputsResponses } from "../handleNewBooking/getCustomInputsResponses";
 import { getEventType } from "../handleNewBooking/getEventType";
+// paperrocket-book: hidden event types with private links need one of those links
+import { assertCanBookEventType } from "../paperrocketPrivateLink";
 import type { getEventTypeResponse } from "../handleNewBooking/getEventTypesFromDB";
 import { getLocationValuesForDb } from "../handleNewBooking/getLocationValuesForDb";
 import { getRequiresConfirmationFlags } from "../handleNewBooking/getRequiresConfirmationFlags";
@@ -571,6 +573,14 @@ async function handler(
     _isDryRun: isDryRun = false,
     ...reqBody
   } = bookingData;
+
+  // paperrocket-book: a hidden event type that has private links is bookable only with one of them
+  // (or when rescheduling a booking of that same event type). See paperrocketPrivateLink.ts.
+  await assertCanBookEventType({
+    eventTypeId: eventType.id,
+    hashedLink: hasHashedBookingLink ? (reqBody.hashedLink ?? null) : null,
+    rescheduleUid: rawBookingData.rescheduleUid ?? null,
+  });
 
   let troubleshooterData = buildTroubleshooterData({
     eventType,

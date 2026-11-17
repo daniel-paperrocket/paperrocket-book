@@ -59,6 +59,8 @@ const BookerComponent = ({
   username,
   eventSlug,
   hideBranding = false,
+  // paperrocket-book: PR_HIDE_BOOKER_TERMS, from the page server props
+  hideTerms = false,
   entity,
   onOverlayClickNoCalendar,
   onClickOverlayContinue,
@@ -292,9 +294,11 @@ const BookerComponent = ({
           backButton: customClassNames?.confirmStep?.backButton,
         }}
         isPlatform={isPlatform}
+        hideTerms={hideTerms}
       />
     );
   }, [
+    hideTerms,
     bookerFormErrorRef,
     bookerState,
     bookingForm,

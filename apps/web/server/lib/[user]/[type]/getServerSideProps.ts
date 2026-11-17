@@ -2,6 +2,8 @@ import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import type { GetBookingType } from "@calcom/features/bookings/lib/get-booking";
 import { getBookingForReschedule, getBookingForSeatedEvent } from "@calcom/features/bookings/lib/get-booking";
 import { getUsernameList } from "@calcom/features/eventtypes/lib/defaultEvents";
+// paperrocket-book: hidden event types with private links are not shown on their plain URL
+import { canBookEventType } from "@calcom/features/bookings/lib/paperrocketPrivateLink";
 import type { getPublicEvent } from "@calcom/features/eventtypes/lib/getPublicEvent";
 import { EventRepository } from "@calcom/features/eventtypes/repositories/EventRepository";
 import { shouldHideBrandingForUserEvent } from "@calcom/features/profile/lib/hideBranding";
@@ -23,6 +25,8 @@ type Props = {
   user: string;
   slug: string;
   isBrandingHidden: boolean;
+  // paperrocket-book: PR_HIDE_BOOKER_TERMS=true hides the Terms and Privacy line on the booking form (read at runtime).
+  hideBookerTerms: boolean;
   isSEOIndexable: boolean | null;
   themeBasis: null | string;
   orgBannerUrl: null;
@@ -176,6 +180,7 @@ async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
     user: usernames.join("+"),
     slug,
     isBrandingHidden: false,
+    hideBookerTerms: process.env.PR_HIDE_BOOKER_TERMS === "true",
     isSEOIndexable: true,
     themeBasis: null,
     bookingUid: bookingUid ? `${bookingUid}` : null,
@@ -258,6 +263,19 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
     } as const;
   }
 
+  // paperrocket-book: a hidden event type with private links is only reachable through /d/<link>/<slug>,
+  // or to reschedule one of its own bookings.
+  if (
+    !(await canBookEventType({
+      eventTypeId: eventData.id,
+      rescheduleUid: typeof rescheduleUid === "string" ? rescheduleUid : null,
+    }))
+  ) {
+    return {
+      notFound: true,
+    } as const;
+  }
+
   const allowSEOIndexing = org
     ? user?.profile?.organization?.organizationSettings?.allowSEOIndexing
       ? user?.allowSEOIndexing
@@ -272,6 +290,8 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
       eventTypeId: eventData.id,
       owner: user,
     }),
+    // paperrocket-book: PR_HIDE_BOOKER_TERMS=true hides the Terms and Privacy line on the booking form (read at runtime).
+    hideBookerTerms: process.env.PR_HIDE_BOOKER_TERMS === "true",
     isSEOIndexable: allowSEOIndexing,
     themeBasis: username,
     bookingUid: bookingUid ? `${bookingUid}` : null,

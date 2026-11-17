@@ -13,6 +13,7 @@ export default function Type({
   user,
   booking,
   isBrandingHidden,
+  hideBookerTerms,
   isTeamEvent,
   entity,
   duration,
@@ -30,6 +31,7 @@ export default function Type({
           eventSlug={slug}
           bookingData={booking}
           hideBranding={isBrandingHidden}
+          hideTerms={hideBookerTerms}
           isTeamEvent={isTeamEvent}
           entity={entity}
           duration={duration}

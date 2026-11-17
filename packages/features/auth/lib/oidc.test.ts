@@ -23,7 +23,7 @@ describe("login card settings", () => {
     expect(getLoginLogoUrl()).toBe("/brand-logo.svg");
     process.env.PR_LOGIN_LOGO_URL = "https://cdn.example.test/logo.svg";
     expect(getLoginLogoUrl()).toBe("https://cdn.example.test/logo.svg");
-    for (const bad of ["//evil.example/x.svg", "/\evil.example", "http://plain.example/x.svg", "javascript:alert(1)"]) {
+    for (const bad of ["//evil.example/x.svg", "/\\evil.example", "http://plain.example/x.svg", "javascript:alert(1)"]) {
       process.env.PR_LOGIN_LOGO_URL = bad;
       expect(getLoginLogoUrl()).toBeNull();
     }

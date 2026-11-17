@@ -109,6 +109,8 @@ export const handleNewRecurringBooking = async function (
         hostname: input.hostname || "",
         forcedSlug: input.forcedSlug as string | undefined,
         ...handleBookingMeta,
+        // paperrocket-book: slot 1 already counted against a private link's usage limit
+        prLaterRecurringSlot: key > 0,
       },
     });
 

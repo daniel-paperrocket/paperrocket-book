@@ -579,9 +579,10 @@ async function handler(
   await assertCanBookEventType({
     eventTypeId: eventType.id,
     hashedLink: hasHashedBookingLink ? (reqBody.hashedLink ?? null) : null,
-    rescheduleUid: rawBookingData.rescheduleUid ?? null,
+    // a seated booking is joined with bookingUid; both must be a booking of this same event type
+    rescheduleUid: rawBookingData.rescheduleUid ?? rawBookingData.bookingUid ?? null,
     viewerUserId: userId ?? null,
-    laterRecurringSlot: !!rawBookingData.allRecurringDates && rawBookingData.isFirstRecurringSlot === false,
+    laterRecurringSlot: input.prLaterRecurringSlot === true,
   });
 
   let troubleshooterData = buildTroubleshooterData({

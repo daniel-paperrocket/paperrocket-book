@@ -38,6 +38,8 @@ export type CreateBookingMeta = {
   forcedSlug?: string;
   noEmail?: boolean;
   traceContext?: TraceContext;
+  // paperrocket-book: set only by RecurringBookingService for slots 2 onwards (never from the request body)
+  prLaterRecurringSlot?: boolean;
 } & PlatformParams;
 
 export type BookingHandlerInput = {

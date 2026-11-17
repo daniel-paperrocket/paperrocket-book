@@ -105,6 +105,10 @@ export default function Login({
   csrfToken,
   isGoogleLoginEnabled,
   isOutlookLoginEnabled,
+  isOidcLoginEnabled,
+  oidcProviderLabel,
+  oidcProviderLogoUrl,
+  isPasswordLoginDisabled,
   totpEmail,
 }: PageProps) {
   const searchParams = useCompatSearchParams();
@@ -170,7 +174,9 @@ export default function Login({
     else setErrorMessage(errorMessages[res.error] || t("something_went_wrong"));
   };
 
-  const showSocialLogin = isGoogleLoginEnabled || isOutlookLoginEnabled;
+  // paperrocket-book: with DISABLE_PASSWORD_LOGIN the page shows only the provider buttons.
+  const showPasswordForm = !isPasswordLoginDisabled;
+  const showSocialLogin = isGoogleLoginEnabled || isOutlookLoginEnabled || isOidcLoginEnabled;
   const showSignupLink =
     process.env.NEXT_PUBLIC_DISABLE_SIGNUP !== "true" && searchParams?.get("register") !== "false";
 
@@ -196,6 +202,27 @@ export default function Login({
             {!twoFactorRequired && showSocialLogin && (
               <>
                 <div className="flex flex-col gap-2">
+                  {isOidcLoginEnabled && (
+                    <Button
+                      className="w-full py-1"
+                      disabled={formState.isSubmitting}
+                      data-testid="oidc"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        setLastUsed("oidc");
+                        await signIn("oidc", {
+                          callbackUrl,
+                        });
+                      }}>
+                      {oidcProviderLogoUrl && <img className="h-5 w-auto" src={oidcProviderLogoUrl} alt="" />}
+                      <span>
+                        {oidcProviderLabel
+                          ? t("oidc_signin_with", { name: oidcProviderLabel })
+                          : t("oidc_signin_fallback")}
+                      </span>
+                      {lastUsed === "oidc" && <LastUsed />}
+                    </Button>
+                  )}
                   {isGoogleLoginEnabled && (
                     <Button
                       className="w-full py-1"
@@ -233,14 +260,17 @@ export default function Login({
                 </div>
 
                 {/* Divider */}
-                <div className="my-6 flex items-center gap-4">
-                  <Separator className="flex-1" />
-                  <span className="text-sm text-zinc-400">{t("or").toLowerCase()}</span>
-                  <Separator className="flex-1" />
-                </div>
+                {showPasswordForm && (
+                  <div className="my-6 flex items-center gap-4">
+                    <Separator className="flex-1" />
+                    <span className="text-sm text-zinc-400">{t("or").toLowerCase()}</span>
+                    <Separator className="flex-1" />
+                  </div>
+                )}
               </>
             )}
 
+            {(showPasswordForm || twoFactorRequired) && (
             <form onSubmit={methods.handleSubmit(onSubmit)} noValidate data-testid="login-form">
               <input defaultValue={csrfToken || undefined} type="hidden" hidden {...register("csrfToken")} />
 
@@ -267,9 +297,11 @@ export default function Login({
                   <Field>
                     <div className="flex w-full items-center justify-between">
                       <FieldLabel>{t("password")}</FieldLabel>
-                      <Link href="/auth/forgot-password" className="text-sm text-subtle hover:text-emphasis">
-                        {t("forgot")}
-                      </Link>
+                      {showPasswordForm && (
+                        <Link href="/auth/forgot-password" className="text-sm text-subtle hover:text-emphasis">
+                          {t("forgot")}
+                        </Link>
+                      )}
                     </div>
                     <InputGroup className="overflow-hidden">
                       <InputGroupInput
@@ -317,6 +349,12 @@ export default function Login({
                 {twoFactorRequired ? t("submit") : t("continue")}
               </Button>
             </form>
+            )}
+
+            {/* paperrocket-book: the error banner also shows when the form is hidden (for example a failed OIDC redirect) */}
+            {!showPasswordForm && !twoFactorRequired && errorMessage && (
+              <Alert severity="error" title={errorMessage} className="mt-4" />
+            )}
 
             {/* Two Factor Footer */}
             {twoFactorRequired && (

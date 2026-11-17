@@ -19,6 +19,12 @@ Set these as container env vars. They are swapped into the built app when the co
 | `NEXT_PUBLIC_WEBSITE_TERMS_URL` | `https://cal.com/terms` |
 | `NEXT_PUBLIC_DISABLE_SIGNUP` | `true` in this build (upstream: signup open) |
 | `PR_DEFAULT_LOCATION` | unset: upstream behaviour (Cal Video). Example: `integrations:google:meet`, `integrations:office365_video` |
+| `PR_EMAIL_NAME` | the app name. The name guests see in emails (for example `Paper Rocket`) |
+| `PR_EMAIL_BRAND_COLOR` | ink `#141414`. Stripe and buttons, `#rrggbb` |
+| `PR_EMAIL_LOGO_URL` | text wordmark. Absolute https URL of a square logo, shown 72 px |
+| `PR_EMAIL_FOOTER_LINES` | none. Address, phone, separated by a vertical bar |
+| `PR_LOCAL_RATE_LIMIT` | on. `false` switches the in-memory login limiter off |
+| `CRON_API_KEY` | unset: the reminder route answers 401. Call it every 5 minutes (see docs/cutover.md) |
 
 Rules for the text values: no double quotes, backslashes, backticks or dollar signs (they would break the JS strings the value lands in; such a value is ignored with a warning and the default used). Spaces, ampersands, slashes and apostrophes are fine. The three URL values need their `https://`.
 

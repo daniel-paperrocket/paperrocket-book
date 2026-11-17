@@ -90,3 +90,25 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 
 - No local build, install or test (yarn runs only in CI). Edits were checked by reading types and call sites; CI is the compile.
 - The shell script has a self-test that passes locally.
+
+## Letterhead round 2 (13 Nov)
+- `packages/emails/src/components/BaseEmailHtml.tsx`: logo tile (72 px, `PR_EMAIL_LOGO_URL`), 4 px brand stripe on the card, eyebrow and left-aligned title, centred footer (name, company, `PR_EMAIL_FOOTER_LINES`, reply note, site link). New optional prop `eyebrow` (booking emails pass "Booking").
+- `Info.tsx` (label left, value right rows), `WhenInfo.tsx` (NZ format, "Friday 20 November 2026, 2.00 to 2.30pm"), `WhoInfo.tsx` (name, role, email), `ManageLink.tsx` and `CallToAction.tsx` (table buttons in the brand colour), `LocationInfo.tsx` ("Cal Video" shows as "Video call").
+- `packages/i18n/locales/en/common.json`: `organizer` is "Organiser".
+- `packages/emails/email-manager.ts`: attendee cancel email no longer runs the booking title through `getEventName` a second time (it repeated "between X and Y" in the subject and body) unless the event type has a custom event name.
+- New env: `PR_EMAIL_NAME` (name guests see, default the app name), `PR_EMAIL_FOOTER_LINES` (address and phone, separated by |). Also set `NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS`: upstream defaults to help@cal.com and the password and verification emails print it.
+
+## Public-repo leak check (13 Nov)
+- `scripts/paperrocket/check-no-infra.sh` (copied from paperrocket-sign, own-file list adapted) and a step at the top of `.github/workflows/paperrocket-check.yml` (also now runs on pull requests). It fails if our own files, or any line we add since the pinned upstream commit, name a client, a host, a server path or a loopback address. The real cutover runbook is private; `docs/cutover.md` is a generic outline. Update the base commit in the workflow when upstream is merged.
+
+## Turbo env pass-through (13 Nov)
+- `turbo.json`: `PR_*` added to `globalEnv`. The image starts the app with `yarn start`, which runs turbo, and turbo strict env mode only passes the variables it lists. Without this every `PR_*` setting (email name, brand colour, logo, footer lines, default location, limiter switch) was silently ignored at runtime. Found in the preview on 13 Nov.
+
+## Footer, NZ dates, brand files (15 Nov, PAP-1492)
+- `packages/emails/src/components/BaseEmailHtml.tsx`: the footer (name, company, footer lines, reply note, site link) always shows. `hideLogo` (set for platform clients and `hideBranding`) used to hide it, so those emails had no footer lines.
+- New: `packages/lib/paperrocketDate.ts` (`formatNzRange`) and its test. One NZ formatter, "Monday 16 November 2026, 4.45 to 5.00pm" (24-hour: "16.45 to 17.00").
+- `packages/emails/templates/attendee-scheduled-email.ts` and `packages/emails/lib/utils/date-formatting.ts`: `getFormattedDate()` uses it. This is the `{{date}}` in every email subject (cancel, reschedule, request, reminder), so subjects no longer read "4:45pm - 5:00pm, Monday, November 16, 2026".
+- `packages/emails/src/components/WhenInfo.tsx`: uses the same formatter instead of its own copy.
+- `apps/web/modules/bookings/views/bookings-single-view.tsx`: the When block on the booking success page (single and recurring) uses it, on one line, timezone after it.
+- Not changed: SMS text, the booker's slot list, and the "complete your booking" title (still uses the long localised date).
+- `.github/workflows/paperrocket-check.yml`: runs `packages/lib/paperrocketDate.test.ts` too.

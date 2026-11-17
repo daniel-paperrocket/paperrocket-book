@@ -537,7 +537,11 @@ export const sendCancelledEmailsAndSMS = async (
             new AttendeeCancelledEmail(
               {
                 ...calendarEvent,
-                title: getEventName({
+                // paperrocket-book: without a custom event name calendarEvent.title is already the full name; running it
+                // through getEventName again repeated "between X and Y".
+                title: !eventNameObject?.eventName
+                  ? calendarEvent.title
+                  : getEventName({
                   ...eventNameObject,
                   t: attendee.language.translate,
                   attendeeName: attendee.name,

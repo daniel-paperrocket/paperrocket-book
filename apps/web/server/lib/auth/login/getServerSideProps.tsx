@@ -1,4 +1,5 @@
 import process from "node:process";
+import { getOidcPublicProps } from "@calcom/features/auth/lib/oidc";
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { WEBSITE_URL } from "@calcom/lib/constants";
 import { getSafeRedirectUrl } from "@calcom/lib/getSafeRedirectUrl";
@@ -89,6 +90,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       csrfToken: await getCsrfToken(context),
       isGoogleLoginEnabled: IS_GOOGLE_LOGIN_ENABLED,
       isOutlookLoginEnabled: false,
+      ...getOidcPublicProps(),
       totpEmail,
     },
   };

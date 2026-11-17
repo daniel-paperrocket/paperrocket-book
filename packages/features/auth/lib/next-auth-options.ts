@@ -4,6 +4,12 @@ import { updateProfilePhotoMicrosoft } from "@calcom/app-store/_utils/oauth/upda
 import { createGoogleCalendarServiceWithGoogleType } from "@calcom/app-store/googlecalendar/lib/CalendarService";
 import { getIdentityProvider } from "@calcom/features/auth/lib/identityProviders";
 import {
+  getOidcConfig,
+  isOidcSignupAllowed,
+  isPasswordLoginDisabled,
+  OIDC_PROVIDER_ID,
+} from "@calcom/features/auth/lib/oidc";
+import {
   OUTLOOK_CLIENT_ID,
   OUTLOOK_CLIENT_SECRET,
   OUTLOOK_LOGIN_ENABLED,
@@ -151,6 +157,10 @@ const checkIfUserShouldBelongToOrg = async (idP: IdentityProvider, email: string
 export async function authorizeCredentials(
   credentials: Record<"email" | "password" | "totpCode" | "backupCode", string> | undefined
 ): Promise<User | null> {
+  // paperrocket-book: refuse password sign-in server-side when DISABLE_PASSWORD_LOGIN=true, not only hide the form.
+  if (isPasswordLoginDisabled()) {
+    throw new Error(ErrorCode.IncorrectEmailPassword);
+  }
   log.debug("CredentialsProvider:credentials:authorize", safeStringify({ credentials }));
   if (!credentials) {
     console.error(`For some reason credentials are missing`);
@@ -328,6 +338,32 @@ if (IS_GOOGLE_LOGIN_ENABLED) {
       },
     })
   );
+}
+
+// paperrocket-book: generic OpenID Connect provider (for example Keycloak), only when the three env vars are set.
+const oidcConfig = getOidcConfig();
+if (oidcConfig) {
+  providers.push({
+    id: OIDC_PROVIDER_ID,
+    name: process.env.OIDC_PROVIDER_LABEL || "OpenID Connect",
+    type: "oauth",
+    wellKnown: `${oidcConfig.issuer}/.well-known/openid-configuration`,
+    clientId: oidcConfig.clientId,
+    clientSecret: oidcConfig.clientSecret,
+    idToken: true,
+    checks: ["pkce", "state"],
+    authorization: { params: { scope: "openid email profile" } },
+    // Safe because signIn below only lets in a user whose email the provider says is verified.
+    allowDangerousEmailAccountLinking: true,
+    profile(profile: { sub: string; name?: string; preferred_username?: string; email?: string; picture?: string }) {
+      return {
+        id: profile.sub,
+        name: profile.name ?? profile.preferred_username ?? null,
+        email: profile.email,
+        image: profile.picture ?? null,
+      };
+    },
+  });
 }
 
 if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
@@ -819,6 +855,36 @@ export const getOptions = ({
           return false;
         }
       }
+      // paperrocket-book: OIDC sign-in. Matches an existing user by verified email and never touches
+      // identityProvider (no schema change). New users only when OIDC_ALLOW_SIGNUP=true.
+      if (account?.provider === OIDC_PROVIDER_ID) {
+        const oidcEmail = user.email?.trim();
+        if (!oidcEmail) {
+          log.warn("callbacks:signIn:oidc - email is missing");
+          return "/auth/error?error=unverified-email";
+        }
+        if ((profile as ExtendedOAuthProfile)?.email_verified !== true) {
+          log.warn("callbacks:signIn:oidc - email not verified by the provider");
+          return "/auth/error?error=unverified-email";
+        }
+        const oidcUser = await prisma.user.findFirst({
+          where: { email: { equals: oidcEmail, mode: "insensitive" } },
+          select: { email: true, locked: true },
+        });
+        if (oidcUser) {
+          if (oidcUser.locked) return "/auth/error?error=oidc-no-account";
+          // next-auth's adapter and our jwt callback look the user up by exact email, so use the stored one.
+          user.email = oidcUser.email;
+          return true;
+        }
+        if (!isOidcSignupAllowed()) {
+          log.warn("callbacks:signIn:oidc - no existing user and OIDC_ALLOW_SIGNUP is not true");
+          return "/auth/error?error=oidc-no-account";
+        }
+        // Sign-up allowed: next-auth's adapter creates the user.
+        return true;
+      }
+
       if (!user.email) {
         log.warn("callbacks:signIn - user email is missing", { provider: account?.provider });
         return false;

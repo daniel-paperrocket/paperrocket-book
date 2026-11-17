@@ -26,6 +26,10 @@ const querySchema = z.object({
 });
 
 async function handler(req: NextRequest) {
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true, even with no users. Start once with the flag unset to make the first admin.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    return NextResponse.json({ message: "Disabled" }, { status: 403 });
+  }
   const userCount = await prisma.user.count();
   if (userCount !== 0) {
     throw new HttpError({ statusCode: 400, message: "No setup needed." });

@@ -4752,5 +4752,8 @@
   "pr_reminder_title_1h": "Your booking starts in an hour",
   "pr_reminder_subtitle": "A quick reminder of the details.",
   "pr_reminder_subject": "Reminder: {{title}} at {{date}}",
+  "oidc_signin_with": "Sign in with {{name}}",
+  "oidc_signin_fallback": "Sign in with your organisation",
+  "oidc_no_account_error": "We could not find an account for you here. Ask the person who runs this site to add you, then try again.",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑"
 }

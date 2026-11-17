@@ -2,6 +2,7 @@ import { withAppDirSsr } from "app/WithAppDirSsr";
 import type { PageProps as ServerPageProps } from "app/_types";
 import { _generateMetadata } from "app/_utils";
 import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { buildLegacyCtx } from "@lib/buildLegacyCtx";
 
@@ -23,6 +24,10 @@ export const generateMetadata = async ({ params }: { params: Promise<{ id: strin
 const getData = withAppDirSsr<ClientPageProps>(getServerSideProps);
 const ServerPage = async ({ params, searchParams }: ServerPageProps) => {
   const context = buildLegacyCtx(await headers(), await cookies(), await params, await searchParams);
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    redirect("/auth/login");
+  }
   const props = await getData(context);
 
   return <SetNewUserPassword {...props} />;

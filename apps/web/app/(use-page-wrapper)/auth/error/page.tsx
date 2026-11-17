@@ -51,6 +51,9 @@ const ServerPage = async ({ searchParams }: PageProps) => {
       return t("saml_idp_not_authoritative_error");
     } else if (error === "unverified-email") {
       return t("unverified_email_oauth_error");
+    } else if (error === "oidc-no-account") {
+      // paperrocket-book: OIDC sign-in with no matching (or a locked) account
+      return t("oidc_no_account_error");
     }
     return t("error_during_login") + (error ? ` Error code: ${error}` : "");
   };

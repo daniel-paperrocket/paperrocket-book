@@ -10,6 +10,10 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 async function handler(req: NextRequest) {
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    return NextResponse.json({ message: "Disabled" }, { status: 403 });
+  }
   const body = await parseRequestData(req);
   const email = emailSchema.transform((val) => val.toLowerCase()).safeParse(body?.email);
 

@@ -22,6 +22,10 @@ export const generateMetadata = async () => {
 
 const ServerPage = async ({ params, searchParams }: ServerPageProps) => {
   const context = buildLegacyCtx(await headers(), await cookies(), await params, await searchParams);
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    redirect("/auth/login");
+  }
   const session = await getServerSession({ req: context.req });
 
   if (session) {

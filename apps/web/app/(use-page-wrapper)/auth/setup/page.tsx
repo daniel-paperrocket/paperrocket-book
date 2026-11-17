@@ -26,6 +26,10 @@ const getData = withAppDirSsr<ClientPageProps>(getServerSideProps);
 const stepSchema = z.enum(["1", "2", "3", "4"]);
 
 const ServerPage = async ({ params, searchParams: _searchParams }: ServerPageProps) => {
+  // paperrocket-book: closed when DISABLE_PASSWORD_LOGIN=true.
+  if (process.env.DISABLE_PASSWORD_LOGIN === "true") {
+    redirect("/auth/login");
+  }
   const searchParams = await _searchParams;
   const stepResult = stepSchema.safeParse(searchParams?.step);
 

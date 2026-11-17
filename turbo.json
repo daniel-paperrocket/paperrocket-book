@@ -3,6 +3,8 @@
   "globalDependencies": ["yarn.lock"],
   "globalEnv": [
     "PR_*",
+    "OIDC_*",
+    "DISABLE_PASSWORD_LOGIN",
     "ALLOWED_HOSTNAMES",
     "ANALYZE",
     "AWAITING_PAYMENT_EMAIL_DELAY_MINUTES",

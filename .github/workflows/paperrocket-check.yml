@@ -31,6 +31,14 @@ jobs:
       - name: Self-test runtime branding script
         run: sh paperrocket/test-runtime-brand.sh
 
+      # turbo passes only the env names it is told about to the app. Without these the OIDC button and the
+      # password-login switch silently do nothing in the image (found on pr.5, 18 Nov 2026).
+      - name: Runtime env reaches the app (turbo globalEnv)
+        run: |
+          for n in 'PR_*' 'OIDC_*' 'DISABLE_PASSWORD_LOGIN'; do
+            grep -qF "\"$n\"" turbo.json || { echo "turbo.json globalEnv is missing $n"; exit 1; }
+          done
+
       - uses: actions/setup-node@v4
         with:
           node-version: v22.x

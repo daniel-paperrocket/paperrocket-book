@@ -72,6 +72,7 @@ A generic OpenID Connect login (built for Keycloak), driven only by env. No sche
 - `apps/web/server/lib/auth/login/getServerSideProps.tsx`: passes the public props.
 - `apps/web/app/(use-page-wrapper)/auth/forgot-password/[id]/page.tsx`: redirects to `/auth/login` when `DISABLE_PASSWORD_LOGIN=true`. `OIDC_PROVIDER_LOGO_URL` is used only when it is an https: URL (`getOidcLogoUrl` in `oidc.ts`).
 - `apps/web/modules/auth/login-view.tsx`: also hides the sign-up link when password login is disabled. OIDC button (same Button as Google, optional logo), and with `DISABLE_PASSWORD_LOGIN` the form, "Forgot" link and divider are hidden.
+- `apps/web/server/lib/auth/login/getServerSideProps.tsx`: an install with no users is not sent to `/auth/setup` when `DISABLE_PASSWORD_LOGIN=true` (that page is closed and redirects back, which looped). The login page shows the OIDC button, and with `OIDC_ALLOW_SIGNUP=true` the first OIDC sign-in creates the first user (promote it to ADMIN in the database).
 - `apps/web/modules/auth/hooks/useLastUsed.tsx`: `"oidc"` added to the type.
 - `apps/web/app/(use-page-wrapper)/auth/error/page.tsx`: message for `error=oidc-no-account`.
 - `packages/i18n/locales/en/common.json`: `oidc_signin_with`, `oidc_signin_fallback`, `oidc_no_account_error`.

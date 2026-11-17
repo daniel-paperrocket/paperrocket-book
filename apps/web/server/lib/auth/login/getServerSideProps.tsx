@@ -76,7 +76,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const userExists = await prisma.user.findFirst({ select: { id: true } });
-  if (!userExists) {
+  // paperrocket-book: with DISABLE_PASSWORD_LOGIN=true the setup page is closed and sends back here, so sending an
+  // empty install to it would loop. Show the login page (the OIDC button) instead.
+  if (!userExists && process.env.DISABLE_PASSWORD_LOGIN !== "true") {
     // Proceed to new onboarding to create first admin user
     return {
       redirect: {

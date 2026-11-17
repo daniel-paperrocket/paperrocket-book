@@ -32,7 +32,7 @@ Mount a folder at `/calcom/brand`. Files in it replace the same-named files in t
 
 ## Tags and images
 
-Image: `ghcr.io/daniel-paperrocket/paperrocket-book`.
+Image: `ghcr.io/daniel-rae-wanaka/paperrocket-book`.
 
 Release tag scheme: `diy-<YYYY.MM.DD of the upstream commit>-pr.<n>`, for example `diy-2026.11.11-pr.1`. The date is the commit date of the upstream commit we are based on; `n` counts our releases on top of that commit, starting at 1. Pushing a tag matching `diy-*-pr.*` runs `.github/workflows/paperrocket-image.yml`, which publishes the tag and `sha-<short>` to GHCR.
 

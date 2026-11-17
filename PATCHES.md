@@ -29,7 +29,7 @@ Upstream files touched:
 
 - `scripts/paperrocket-start.sh`
 - `paperrocket/README.md`, `paperrocket/BRAND.md`, `paperrocket/test-runtime-brand.sh`
-- `.github/workflows/paperrocket-image.yml`: on tags `diy-*-pr.*` and manual run, builds the Dockerfile against a postgres container (as upstream's docker-build-and-test action does) and pushes to `ghcr.io/daniel-paperrocket/paperrocket-book` as the tag and `sha-<short>`.
+- `.github/workflows/paperrocket-image.yml`: on tags `diy-*-pr.*` and manual run, builds the Dockerfile against a postgres container (as upstream's docker-build-and-test action does) and pushes to `ghcr.io/daniel-rae-wanaka/paperrocket-book` as the tag and `sha-<short>`.
 - `.github/workflows/paperrocket-check.yml`: on pushes to `pr/**`, `yarn install --immutable` then type-check `@calcom/web` and `@calcom/app-store`.
 
 ## Env vars our build adds or changes

@@ -18,7 +18,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/daniel-paperrocket/paperrocket-book
+  IMAGE: ghcr.io/daniel-rae-wanaka/paperrocket-book
   # Throwaway build-time database, the same values upstream's release workflow uses. Nothing here is a secret.
   POSTGRES_USER: unicorn_user
   POSTGRES_PASSWORD: magical_password

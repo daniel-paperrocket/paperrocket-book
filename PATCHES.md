@@ -135,6 +135,6 @@ The image was 7.8 GB: the whole monorepo with every workspace's node_modules (3.
 - `scripts/seed-app-store.ts` bundled to `scripts/seed-app-store.js` with esbuild at build time; `@prisma/client` and `pg` resolve from the standalone node_modules.
 - `start.sh` runs `node apps/web/server.js` instead of `yarn start`, with `HOSTNAME=0.0.0.0`.
 - The URL and branding swaps also cover `apps/web/server.js`, which carries the built Next config.
-- Source maps are deleted.
+- Source maps are deleted, as are the standalone copy of `public` (copied separately) and Prisma's wasm engines for databases other than PostgreSQL.
 - Two kinds of file the app reads by a path built at run time are copied in by hand, because tracing can't see them: `packages/emails/templates/confirm-email.html` (sign-in email) and `packages/app-store/*/DESCRIPTION.md`.
 Note: the standalone server uses the Next config as built. `next.config.ts` no longer runs at start, so its run-time env defaults (`NEXTAUTH_URL`, `NEXT_PUBLIC_WEBSITE_URL`, `ORGANIZATIONS_ENABLED` from `NEXT_PUBLIC_SINGLE_ORG_SLUG`) must be set in the compose file.

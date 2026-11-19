@@ -86,6 +86,10 @@ RUN node_modules/.bin/esbuild scripts/seed-app-store.ts --bundle --platform=node
 # paperrocket-book: source maps are never read at run time.
 RUN find apps/web/.next -name '*.map' -type f -delete
 
+# paperrocket-book: the standalone output carries its own copy of public, which the run stage copies separately
+# (after the URL swap), so drop it here. Prisma's client ships wasm engines for every database; only PostgreSQL is used.
+RUN rm -rf apps/web/.next/standalone/apps/web/public && find apps/web/.next/standalone/node_modules/@prisma/client/runtime -type f -regextype posix-extended -regex '.*_bg\.(mysql|sqlite|sqlserver|cockroachdb)\..*' -delete
+
 # paperrocket-book: files the app reads from the monorepo at run time by a path built in code, which Next's file
 # tracing can't see: the sign-in email template and the app store descriptions.
 RUN mkdir -p /runtime-extra && cd packages   && cp --parents emails/templates/confirm-email.html /runtime-extra/   && find app-store -maxdepth 2 -name DESCRIPTION.md -exec cp --parents -t /runtime-extra/ {} +

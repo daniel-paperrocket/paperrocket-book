@@ -636,7 +636,8 @@ export default function Success(props: PageProps) {
                         {(bookingInfo?.user || bookingInfo?.attendees) && (
                           <>
                             <div className="font-medium">{t("who")}</div>
-                            <div className="col-span-2 last:mb-0">
+                            {/* paperrocket-book: min-w-0 and break-all keep a long email inside the card at 390px. */}
+                            <div className="col-span-2 min-w-0 last:mb-0">
                               {bookingInfo?.user && (
                                 <div className="mb-3">
                                   <div>
@@ -646,7 +647,7 @@ export default function Success(props: PageProps) {
                                     <Badge variant="blue">{t("Host")}</Badge>
                                   </div>
                                   {!bookingInfo.eventType?.hideOrganizerEmail && (
-                                    <p className="text-default" data-testid="booking-host-email">
+                                    <p className="text-default break-all" data-testid="booking-host-email">
                                       {bookingInfo?.userPrimaryEmail ?? bookingInfo.user.email}
                                     </p>
                                   )}
@@ -671,7 +672,9 @@ export default function Success(props: PageProps) {
                                       </p>
                                     )}
                                     {!isSmsCalEmail(attendee.email) && !shouldHideEmail && (
-                                      <p data-testid={`attendee-email-${attendee.email}`}>{attendee.email}</p>
+                                      <p className="break-all" data-testid={`attendee-email-${attendee.email}`}>
+                                        {attendee.email}
+                                      </p>
                                     )}
                                   </div>
                                 );

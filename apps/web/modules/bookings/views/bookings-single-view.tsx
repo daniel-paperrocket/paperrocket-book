@@ -664,7 +664,9 @@ export default function Success(props: PageProps) {
                                 return (
                                   <div key={attendee.name + attendee.email} className="mb-3 last:mb-0">
                                     {attendee.name && (
-                                      <p data-testid={`attendee-name-${attendee.name}`}>{attendee.name}</p>
+                                      <p className="break-all" data-testid={`attendee-name-${attendee.name}`}>
+                                        {attendee.name}
+                                      </p>
                                     )}
                                     {attendee.phoneNumber && (
                                       <p data-testid={`attendee-phone-${attendee.phoneNumber}`}>

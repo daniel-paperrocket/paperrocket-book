@@ -158,4 +158,21 @@ describe("paperrocket-book footer and NZ dates (PAP-1492)", () => {
     expect(payload.subject).toContain("Friday 20 November 2026, 2.00 to 2.30pm");
     expect(payload.subject).not.toMatch(/\d:\d\d(am|pm) - /);
   });
+
+  it("gives the organiser's cancel email subject the same NZ format", async () => {
+    const { default: OrganizerCancelledEmail } = await import("./templates/organizer-cancelled-email");
+    const mail = new OrganizerCancelledEmail({ calEvent });
+    const payload = (await (mail as unknown as { getNodeMailerPayload(): Promise<{ subject: string }> }).getNodeMailerPayload()) as {
+      subject: string;
+    };
+    expect(payload.subject).toBe(
+      "Cancelled: Chat between Daniel Rae and Maria at Friday 20 November 2026, 2.00 to 2.30pm"
+    );
+    expect(payload.subject).not.toMatch(/\d:\d\d(am|pm) - /);
+  });
+
+  it("says cancelled, not canceled, on the cancelled booking page", () => {
+    expect(en.event_cancelled).toBe("This event is cancelled");
+    expect(Object.values(en).join("\n")).not.toMatch(/anceled/);
+  });
 });

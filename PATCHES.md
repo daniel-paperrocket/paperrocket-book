@@ -127,3 +127,14 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 ## Booking page at 390px and phone country (19 Nov)
 - `apps/web/modules/bookings/views/bookings-single-view.tsx`: the host and guest emails and the guest name get `break-all` (the Who column also gets `min-w-0`), so a long email wraps inside the card on the booked and cancelled pages.
 - `packages/trpc/server/routers/publicViewer/countryCode.handler.ts`: new env `PR_DEFAULT_PHONE_COUNTRY` (uppercase ISO code, e.g. `NZ`; anything else is ignored) sets the phone field's default country for every visitor. Unset, upstream behaviour (Vercel's geo header, then the browser language, then US).
+
+## Smaller image: standalone output on a slim base (19 Nov)
+The image was 7.8 GB: the whole monorepo with every workspace's node_modules (3.2 GB), the full .next folder and the full node:22 base. The run stage now holds only what runs:
+- Next's standalone output (the build already set `BUILD_STANDALONE=true`), plus `.next/static` and `public`, on `node:22-slim` with netcat, wget, openssl and CA certificates.
+- The Prisma CLI (6.16.1, same as the workspace) in `/prisma-cli`, for `migrate deploy` at start.
+- `scripts/seed-app-store.ts` bundled to `scripts/seed-app-store.js` with esbuild at build time; `@prisma/client` and `pg` resolve from the standalone node_modules.
+- `start.sh` runs `node apps/web/server.js` instead of `yarn start`, with `HOSTNAME=0.0.0.0`.
+- The URL and branding swaps also cover `apps/web/server.js`, which carries the built Next config.
+- Source maps are deleted, as are the standalone copy of `public` (copied separately) and Prisma's wasm engines for databases other than PostgreSQL.
+- Two kinds of file the app reads by a path built at run time are copied in by hand, because tracing can't see them: `packages/emails/templates/confirm-email.html` (sign-in email) and `packages/app-store/*/DESCRIPTION.md`.
+Note: the standalone server uses the Next config as built. `next.config.ts` no longer runs at start, so its run-time env defaults (`NEXTAUTH_URL`, `NEXT_PUBLIC_WEBSITE_URL`, `ORGANIZATIONS_ENABLED` from `NEXT_PUBLIC_SINGLE_ORG_SLUG`) must be set in the compose file.

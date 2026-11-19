@@ -48,7 +48,8 @@ add_swap "https://PRBOOK_PLACEHOLDER_TERMS_URL" "$NEXT_PUBLIC_WEBSITE_TERMS_URL"
 add_swap "PRBOOK_PLACEHOLDER_DISABLE_SIGNUP" "$NEXT_PUBLIC_DISABLE_SIGNUP" "true"
 
 echo "paperrocket-book: swapping build placeholders for runtime branding."
-for file in $(grep -rlF "PRBOOK_PLACEHOLDER_" "$WEB_DIR/.next/" "$WEB_DIR/public/" 2>/dev/null); do
+# The standalone server keeps the built Next config in server.js, so it is included.
+for file in $(grep -rlF "PRBOOK_PLACEHOLDER_" "$WEB_DIR/.next/" "$WEB_DIR/public/" "$WEB_DIR/server.js" 2>/dev/null); do
   sed -i -f "$SED_ARGS_FILE" "$file"
 done
 

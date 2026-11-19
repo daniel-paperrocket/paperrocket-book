@@ -79,13 +79,43 @@ ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
 
 RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${NEXT_PUBLIC_WEBAPP_URL}
 
-FROM node:22 AS runner
+# paperrocket-book: the app store seed runs at every start. Bundle it to plain JavaScript here, so the run stage
+# needs neither ts-node nor the workspace sources. Prisma's client and pg stay external: the standalone output has them.
+RUN node_modules/.bin/esbuild scripts/seed-app-store.ts --bundle --platform=node --target=node22 --format=cjs   --outfile=scripts/seed-app-store.js --external:@prisma/client --external:pg --external:pg-native --log-level=warning
+
+# paperrocket-book: source maps are never read at run time.
+RUN find apps/web/.next -name '*.map' -type f -delete
+
+# paperrocket-book: the standalone output carries its own copy of public, which the run stage copies separately
+# (after the URL swap), so drop it here. Prisma's client ships wasm engines for every database; only PostgreSQL is used.
+RUN rm -rf apps/web/.next/standalone/apps/web/public && find apps/web/.next/standalone/node_modules/@prisma/client/runtime -type f -regextype posix-extended -regex '.*_bg\.(mysql|sqlite|sqlserver|cockroachdb)\..*' -delete
+
+# paperrocket-book: files the app reads from the monorepo at run time by a path built in code, which Next's file
+# tracing can't see: the sign-in email template and the app store descriptions.
+RUN mkdir -p /runtime-extra && cd packages   && cp --parents emails/templates/confirm-email.html /runtime-extra/   && find app-store -maxdepth 2 -name DESCRIPTION.md -exec cp --parents -t /runtime-extra/ {} +
+
+# paperrocket-book: the Prisma CLI for "migrate deploy" at start, on its own, so the run stage needs no workspace node_modules.
+FROM node:22-slim AS prisma-cli
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /prisma-cli
+RUN npm install --omit=dev --no-audit --no-fund --no-package-lock prisma@6.16.1 && npm cache clean --force
+
+# paperrocket-book: the run stage is Next's standalone output on a slim base (same Debian release and Node as the
+# build stages), instead of the whole monorepo with every workspace's node_modules. See PATCHES.md.
+FROM node:22-slim AS runner
 
 WORKDIR /calcom
 
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder-two /calcom ./
+COPY --from=prisma-cli /prisma-cli /prisma-cli
+COPY --from=builder-two /calcom/apps/web/.next/standalone ./
+COPY --from=builder-two /calcom/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder-two /calcom/apps/web/public ./apps/web/public
+COPY --from=builder-two /calcom/packages/prisma/schema.prisma ./packages/prisma/schema.prisma
+COPY --from=builder-two /calcom/packages/prisma/migrations ./packages/prisma/migrations
+COPY --from=builder-two /calcom/scripts ./scripts
+COPY --from=builder-two /runtime-extra ./packages
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
   BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL

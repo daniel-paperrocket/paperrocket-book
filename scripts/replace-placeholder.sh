@@ -8,6 +8,12 @@ fi
 
 echo "Replacing all statically built instances of $FROM with $TO."
 
-for file in $(egrep -r -l "${FROM}" apps/web/.next/ apps/web/public/); do
+# paperrocket-book: the standalone server keeps the built Next config in apps/web/server.js, so it is swapped too.
+TARGETS="apps/web/.next/ apps/web/public/"
+if [ -f apps/web/server.js ]; then
+    TARGETS="$TARGETS apps/web/server.js"
+fi
+
+for file in $(egrep -r -l "${FROM}" $TARGETS); do
     sed -i -e "s|$FROM|$TO|g" "$file"
 done

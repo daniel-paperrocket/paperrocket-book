@@ -7,7 +7,10 @@ type CountryCodeOptions = {
 export const countryCodeHandler = async ({ ctx }: CountryCodeOptions) => {
   const { req } = ctx;
 
-  const countryCode: string | string[] = req?.headers?.["x-vercel-ip-country"] ?? "";
+  // paperrocket-book: PR_DEFAULT_PHONE_COUNTRY (e.g. NZ) sets the phone field's default country for every
+  // visitor. Unset, upstream behaviour (Vercel's geo header, then the browser language).
+  const countryCode: string | string[] =
+    process.env.PR_DEFAULT_PHONE_COUNTRY || req?.headers?.["x-vercel-ip-country"] || "";
   return { countryCode: Array.isArray(countryCode) ? countryCode[0] : countryCode };
 };
 

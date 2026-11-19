@@ -79,11 +79,15 @@ ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
 
 RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${NEXT_PUBLIC_WEBAPP_URL}
 
-FROM node:22 AS runner
+# paperrocket-book: source maps and tool caches are never read at run time. Dropping them keeps the image smaller.
+RUN find apps/web/.next node_modules packages -name '*.map' -type f -delete   && rm -rf node_modules/.cache apps/web/.next/cache
+
+# paperrocket-book: slim base (same Debian release and Node as the build stages), with only what start.sh, Prisma and the health check need.
+FROM node:22-slim AS runner
 
 WORKDIR /calcom
 
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder-two /calcom ./
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000

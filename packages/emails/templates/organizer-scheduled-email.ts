@@ -4,6 +4,7 @@ import { default as cloneDeep } from "lodash/cloneDeep";
 import { getRichDescription } from "@calcom/lib/CalEventParser";
 import { EMAIL_FROM_NAME } from "@calcom/lib/constants";
 import { getReplyToHeader } from "@calcom/lib/getReplyToHeader";
+import { formatNzRange } from "@calcom/lib/paperrocketDate";
 import { TimeFormat } from "@calcom/lib/timeFormat";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 
@@ -126,12 +127,15 @@ ${callToAction}
     });
   }
 
+  // paperrocket-book: NZ style, as the attendee emails: "Friday 20 November 2026, 9.30 to 9.45am"
   protected getFormattedDate() {
     const organizerTimeFormat = this.calEvent.organizer.timeFormat || TimeFormat.TWELVE_HOUR;
-    return `${this.getOrganizerStart(organizerTimeFormat)} - ${this.getOrganizerEnd(
-      organizerTimeFormat
-    )}, ${this.t(this.getOrganizerStart("dddd").toLowerCase())}, ${this.t(
-      this.getOrganizerStart("MMMM").toLowerCase()
-    )} ${this.getOrganizerStart("D, YYYY")}`;
+    return formatNzRange({
+      start: this.calEvent.startTime,
+      end: this.calEvent.endTime,
+      timeZone: this.getTimezone(),
+      locale: this.getLocale(),
+      is24h: String(organizerTimeFormat).includes("H"),
+    });
   }
 }

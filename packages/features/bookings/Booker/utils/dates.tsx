@@ -1,5 +1,10 @@
 import { formatDateTime, formatDateTimeRange } from "@calcom/lib/dateTimeFormatter";
+import { formatNzDate, formatNzTime, formatNzTimeRange } from "@calcom/lib/paperrocketDate";
 import { TimeFormat } from "@calcom/lib/timeFormat";
+
+// paperrocket-book: English booking pages show NZ dates ("Thursday 19 November 2026", "9.00am"), the same
+// as the emails. Other languages keep upstream's Intl formatting.
+const isEnglish = (language: string) => language === "en" || language.startsWith("en-");
 
 interface EventFromToTime {
   date: string;
@@ -18,6 +23,10 @@ interface EventFromTime {
 
 export const formatEventFromTime = ({ date, timeFormat, timeZone, language }: EventFromTime) => {
   const startDate = new Date(date);
+  if (isEnglish(language)) {
+    const is24h = timeFormat !== TimeFormat.TWELVE_HOUR;
+    return { date: formatNzDate({ date: startDate, timeZone }), time: formatNzTime({ date: startDate, timeZone, is24h }) };
+  }
 
   const formattedDate = formatDateTime(startDate, {
     locale: language,
@@ -49,6 +58,22 @@ export const formatEventFromToTime = ({
   const endDate = duration
     ? new Date(new Date(date).setMinutes(startDate.getMinutes() + duration))
     : startDate;
+  if (isEnglish(language)) {
+    const is24h = timeFormat !== TimeFormat.TWELVE_HOUR;
+    const startDay = formatNzDate({ date: startDate, timeZone });
+    const endDay = formatNzDate({ date: endDate, timeZone });
+    if (startDay !== endDay) {
+      // Crosses midnight: both dates, each with its time.
+      return {
+        date: `${startDay} to ${endDay}`,
+        time: `${formatNzTime({ date: startDate, timeZone, is24h })} to ${formatNzTime({ date: endDate, timeZone, is24h })}`,
+      };
+    }
+    return {
+      date: startDay,
+      time: formatNzTimeRange({ start: startDate, end: endDate, timeZone, is24h }),
+    };
+  }
 
   const formattedDate = formatDateTimeRange(startDate, endDate, {
     locale: language,

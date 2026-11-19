@@ -1,10 +1,11 @@
 import {
   APP_NAME,
-  SENDER_NAME,
+
   SUPPORT_MAIL_ADDRESS,
 } from "@calcom/lib/constants";
 import type { EmailVerifyCode } from "../../lib/types/email-types";
 import { BaseEmailHtml } from "../components";
+import { getLetterheadName } from "../components/paperrocket-letterhead";
 
 export const VerifyEmailByCode = (
   props: EmailVerifyCode & Partial<React.ComponentProps<typeof BaseEmailHtml>>
@@ -55,7 +56,7 @@ export const VerifyEmailByCode = (
               >
                 <>
                   {props.language("the_calcom_team", {
-                    companyName: SENDER_NAME,
+                    companyName: getLetterheadName(),
                   })}
                 </>
               </a>

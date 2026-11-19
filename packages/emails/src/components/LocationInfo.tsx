@@ -10,7 +10,9 @@ export function LocationInfo(props: { calEvent: CalendarEvent; t: TFunction }) {
   const { t } = props;
 
   // We would not be able to determine provider name for DefaultEventLocationTypes
-  const providerName = guessEventLocationType(props.calEvent.location)?.label;
+  // paperrocket-book: "Cal Video" is the upstream product name, guests see "Video call".
+  const guessedLabel = guessEventLocationType(props.calEvent.location)?.label;
+  const providerName = guessedLabel === "Cal Video" ? "Video call" : guessedLabel;
 
   const location = props.calEvent.location;
   let meetingUrl = location?.search(/^https?:/) !== -1 ? location : undefined;

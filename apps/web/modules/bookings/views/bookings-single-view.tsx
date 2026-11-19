@@ -28,8 +28,8 @@ import { isWithinMinimumRescheduleNotice as isWithinMinimumRescheduleNoticeUtil 
 import type { nameObjectSchema } from "@calcom/features/eventtypes/lib/eventNaming";
 import { getEventName } from "@calcom/features/eventtypes/lib/eventNaming";
 import { shouldShowFieldInCustomResponses } from "@calcom/lib/bookings/SystemField";
-import { APP_NAME } from "@calcom/lib/constants";
-import { formatToLocalizedDate, formatToLocalizedTime, formatToLocalizedTimezone } from "@calcom/lib/dayjs";
+import { formatToLocalizedDate, formatToLocalizedTimezone } from "@calcom/lib/dayjs";
+import { formatNzRange } from "@calcom/lib/paperrocketDate";
 import useGetBrandingColours from "@calcom/lib/getBrandColours";
 import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
@@ -52,7 +52,7 @@ import { Avatar } from "@calcom/ui/components/avatar";
 import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
 import { EmptyScreen } from "@calcom/ui/components/empty-screen";
-import { EmailInput, TextArea } from "@calcom/ui/components/form";
+import { TextArea } from "@calcom/ui/components/form";
 import { Icon } from "@calcom/ui/components/icon";
 import {
   CalendarIcon,
@@ -1034,40 +1034,7 @@ export default function Success(props: PageProps) {
                       </>
                     )}
 
-                    {session === null && !(userIsOwner || props.hideBranding) && (
-                      <>
-                        <hr className="border-subtle mt-8" />
-                        <div className="text-default pt-8 text-center text-xs">
-                          <a href="https://cal.com/signup">
-                            {t("create_booking_link_with_calcom", { appName: APP_NAME })}
-                          </a>
-
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              const target = e.target as typeof e.target & {
-                                email: { value: string };
-                              };
-                              router.push(`https://cal.com/signup?email=${target.email.value}`);
-                            }}
-                            className="mt-4 flex">
-                            <EmailInput
-                              name="email"
-                              id="email"
-                              defaultValue={email}
-                              className="mr- focus:border-brand-default border-default text-default mt-0 block w-full rounded-none rounded-l-md shadow-sm focus:ring-black sm:text-sm"
-                              placeholder="rick.astley@cal.com"
-                            />
-                            <Button
-                              type="submit"
-                              className="min-w-max rounded-none rounded-r-md"
-                              color="primary">
-                              {t("try_for_free")}
-                            </Button>
-                          </form>
-                        </div>
-                      </>
-                    )}
+                    {/* paperrocket-book: no "Create your own booking link" / "Try it for free" upsell to cal.com on the booking page */}
                   </>
                 )}
                 {isFeedbackMode &&
@@ -1258,23 +1225,7 @@ function RecurringBookings({
         {eventType.recurringEvent?.count &&
           recurringBookingsSorted.slice(0, 4).map((dateStr: string, idx: number) => (
             <div key={idx} className={classNames("mb-2", isCancelled ? "line-through" : "")}>
-              {formatToLocalizedDate(dayjs.utc(dateStr), language, "full", tz)}
-              <br />
-              {formatToLocalizedTime({
-                date: dayjs(dateStr),
-                locale: language,
-                timeStyle: undefined,
-                hour12: !is24h,
-                timeZone: tz,
-              })}{" "}
-              -{" "}
-              {formatToLocalizedTime({
-                date: dayjs(dateStr).add(duration, "m"),
-                locale: language,
-                timeStyle: undefined,
-                hour12: !is24h,
-                timeZone: tz,
-              })}{" "}
+              {formatNzRange({ start: dayjs(dateStr).toDate(), end: dayjs(dateStr).add(duration, "m").toDate(), timeZone: tz, locale: language, is24h })}{" "}
               <span className="text-bookinglight">
                 ({formatToLocalizedTimezone(dayjs.utc(dateStr), language, tz)})
               </span>
@@ -1299,21 +1250,7 @@ function RecurringBookings({
               {eventType.recurringEvent?.count &&
                 recurringBookingsSorted.slice(4).map((dateStr: string, idx: number) => (
                   <div key={idx} className={classNames("mb-2", isCancelled ? "line-through" : "")}>
-                    {formatToLocalizedDate(dayjs.utc(dateStr), language, "full", tz)}
-                    <br />
-                    {formatToLocalizedTime({
-                      date: dayjs(dateStr),
-                      locale: language,
-                      hour12: !is24h,
-                      timeZone: tz,
-                    })}{" "}
-                    -{" "}
-                    {formatToLocalizedTime({
-                      date: dayjs(dateStr).add(duration, "m"),
-                      locale: language,
-                      hour12: !is24h,
-                      timeZone: tz,
-                    })}{" "}
+                    {formatNzRange({ start: dayjs(dateStr).toDate(), end: dayjs(dateStr).add(duration, "m").toDate(), timeZone: tz, locale: language, is24h })}{" "}
                     <span className="text-bookinglight">
                       ({formatToLocalizedTimezone(dayjs.utc(dateStr), language, tz)})
                     </span>
@@ -1336,15 +1273,7 @@ function RecurringBookings({
 
   return (
     <div className={classNames(isCancelled ? "line-through" : "")}>
-      {formatToLocalizedDate(date, language, "full", tz)}
-      <br />
-      {formatToLocalizedTime({ date, locale: language, hour12: !is24h, timeZone: tz })} -{" "}
-      {formatToLocalizedTime({
-        date: dayjs(date).add(duration, "m"),
-        locale: language,
-        hour12: !is24h,
-        timeZone: tz,
-      })}{" "}
+      {formatNzRange({ start: dayjs(date).toDate(), end: dayjs(date).add(duration, "m").toDate(), timeZone: tz, locale: language, is24h })}{" "}
       <span className="text-bookinglight">({formatToLocalizedTimezone(date, language, tz)})</span>
     </div>
   );

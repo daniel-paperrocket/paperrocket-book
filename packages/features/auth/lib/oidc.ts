@@ -37,10 +37,34 @@ export const getOidcLogoUrl = (): string | null => {
   return raw;
 };
 
+/**
+ * paperrocket-book: logo at the top of the login card, from PR_LOGIN_LOGO_URL. An https: URL, or a
+ * path on this site starting with a single / (for example a brand file such as /cal-logo-word-black.svg).
+ * Anything else is treated as unset, and the card shows the app name as text.
+ */
+export const getLoginLogoUrl = (): string | null => {
+  const raw = (process.env.PR_LOGIN_LOGO_URL || "").trim();
+  if (!raw) return null;
+  if (/^\/(?![/\\])/.test(raw)) return raw;
+  try {
+    return new URL(raw).protocol === "https:" ? raw : null;
+  } catch {
+    return null;
+  }
+};
+
+/** paperrocket-book: background of the OIDC button, from PR_LOGIN_BUTTON_COLOR (#rrggbb, white text). Else the theme colour. */
+export const getLoginButtonColor = (): string | null => {
+  const raw = (process.env.PR_LOGIN_BUTTON_COLOR || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : null;
+};
+
 /** Safe to send to the browser: never includes the client secret. */
 export const getOidcPublicProps = () => ({
   isOidcLoginEnabled: isOidcEnabled(),
   oidcProviderLabel: (process.env.OIDC_PROVIDER_LABEL || "").trim() || null,
   oidcProviderLogoUrl: getOidcLogoUrl(),
   isPasswordLoginDisabled: isPasswordLoginDisabled(),
+  loginLogoUrl: getLoginLogoUrl(),
+  loginButtonColor: getLoginButtonColor(),
 });

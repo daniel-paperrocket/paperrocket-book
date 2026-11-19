@@ -18,6 +18,8 @@ import { cookies, headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+// paperrocket-book: read the default logos from public/ on disk (see readPublicLogo).
+import { readPublicLogo } from "./readPublicLogo";
 
 const log = logger.getSubLogger({ prefix: ["[api/logo]"] });
 
@@ -187,6 +189,19 @@ async function getHandler(request: NextRequest) {
   const type: LogoType = parsedQuery?.type && isValidLogoType(parsedQuery.type) ? parsedQuery.type : "logo";
   const logoDefinition = logoDefinitions[type];
   const filteredLogo = teamLogos[logoDefinition.source] ?? logoDefinition.fallback;
+
+  // paperrocket-book: with no team logo, serve the file from public/ on disk. Upstream fetched
+  // WEBAPP_URL/<file> over the network, which 404s when the public host is not reachable from
+  // the container (before DNS, or behind a tunnel) and costs a round trip when it is.
+  if (!teamLogos[logoDefinition.source]) {
+    const local = await readPublicLogo(filteredLogo, WEBAPP_URL);
+    if (local) {
+      const localResponse = new NextResponse(local.buffer as BodyInit);
+      localResponse.headers.set("Content-Type", local.contentType);
+      localResponse.headers.set("Cache-Control", "s-maxage=86400, stale-while-revalidate=60");
+      return localResponse;
+    }
+  }
 
   try {
     let response: Response;

@@ -1,26 +1,15 @@
-import dayjs from "@calcom/dayjs";
+import { formatNzRange } from "@calcom/lib/paperrocketDate";
 import { TimeFormat } from "@calcom/lib/timeFormat";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 
+// paperrocket-book: NZ style, "Monday 16 November 2026, 4.45 to 5.00pm"
 export function getFormattedDate(calEvent: CalendarEvent, attendee: Person): string {
   const inviteeTimeFormat = calEvent.organizer.timeFormat || TimeFormat.TWELVE_HOUR;
-  const timezone = attendee.timeZone;
-  const locale = attendee.language.locale;
-  const t = attendee.language.translate;
-
-  const getFormattedRecipientTime = (time: string, format: string) => {
-    return dayjs(time).tz(timezone).locale(locale).format(format);
-  };
-
-  const getInviteeStart = (format: string) => {
-    return getFormattedRecipientTime(calEvent.startTime, format);
-  };
-
-  const getInviteeEnd = (format: string) => {
-    return getFormattedRecipientTime(calEvent.endTime, format);
-  };
-
-  return `${getInviteeStart(inviteeTimeFormat)} - ${getInviteeEnd(inviteeTimeFormat)}, ${t(
-    getInviteeStart("dddd").toLowerCase()
-  )}, ${t(getInviteeStart("MMMM").toLowerCase())} ${getInviteeStart("D, YYYY")}`;
+  return formatNzRange({
+    start: calEvent.startTime,
+    end: calEvent.endTime,
+    timeZone: attendee.timeZone,
+    locale: attendee.language.locale,
+    is24h: String(inviteeTimeFormat).includes("H"),
+  });
 }

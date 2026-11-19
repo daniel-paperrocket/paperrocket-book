@@ -1,10 +1,10 @@
 import type { TFunction } from "i18next";
 import { RRule } from "rrule";
 
-import dayjs from "@calcom/dayjs";
 // TODO: Use browser locale, implement Intl in Dayjs maybe?
 import "@calcom/dayjs/locales";
 import { getEveryFreqFor } from "@calcom/lib/recurringStrings";
+import { formatNzRange } from "@calcom/lib/paperrocketDate";
 import type { TimeFormat } from "@calcom/lib/timeFormat";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 import type { RecurringEvent } from "@calcom/types/Calendar";
@@ -40,14 +40,6 @@ export function WhenInfo(props: {
 }) {
   const { timeZone, t, calEvent: { recurringEvent } = {}, locale, timeFormat } = props;
 
-  function getRecipientStart(format: string) {
-    return dayjs(props.calEvent.startTime).tz(timeZone).locale(locale).format(format);
-  }
-
-  function getRecipientEnd(format: string) {
-    return dayjs(props.calEvent.endTime).tz(timeZone).locale(locale).format(format);
-  }
-
   const recurringInfo = getRecurringWhen({
     recurringEvent: props.calEvent.recurringEvent,
     attendee: props.calEvent.attendees[0],
@@ -63,7 +55,13 @@ export function WhenInfo(props: {
         description={
           <span data-testid="when">
             {recurringEvent?.count ? `${t("starting")} ` : ""}
-            {getRecipientStart(`dddd, LL | ${timeFormat}`)} - {getRecipientEnd(timeFormat)}{" "}
+            {formatNzRange({
+              start: props.calEvent.startTime,
+              end: props.calEvent.endTime,
+              timeZone,
+              locale,
+              is24h: String(timeFormat).includes("H"),
+            })}{" "}
             <span style={{ color: "#4B5563" }}>({timeZone})</span>
           </span>
         }

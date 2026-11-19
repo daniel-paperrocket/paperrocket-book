@@ -72,6 +72,7 @@ A generic OpenID Connect login (built for Keycloak), driven only by env. No sche
 - `apps/web/server/lib/auth/login/getServerSideProps.tsx`: passes the public props.
 - `apps/web/app/(use-page-wrapper)/auth/forgot-password/[id]/page.tsx`: redirects to `/auth/login` when `DISABLE_PASSWORD_LOGIN=true`. `OIDC_PROVIDER_LOGO_URL` is used only when it is an https: URL (`getOidcLogoUrl` in `oidc.ts`).
 - `apps/web/modules/auth/login-view.tsx`: also hides the sign-up link when password login is disabled. OIDC button (same Button as Google, optional logo), and with `DISABLE_PASSWORD_LOGIN` the form, "Forgot" link and divider are hidden.
+- `apps/web/server/lib/auth/login/getServerSideProps.tsx`: an install with no users is not sent to `/auth/setup` when `DISABLE_PASSWORD_LOGIN=true` (that page is closed and redirects back, which looped). The login page shows the OIDC button, and with `OIDC_ALLOW_SIGNUP=true` the first OIDC sign-in creates the first user (promote it to ADMIN in the database).
 - `apps/web/modules/auth/hooks/useLastUsed.tsx`: `"oidc"` added to the type.
 - `apps/web/app/(use-page-wrapper)/auth/error/page.tsx`: message for `error=oidc-no-account`.
 - `packages/i18n/locales/en/common.json`: `oidc_signin_with`, `oidc_signin_fallback`, `oidc_no_account_error`.
@@ -90,3 +91,35 @@ Only `paperrocket-check.yml` and `paperrocket-image.yml` run in this fork. The o
 
 - No local build, install or test (yarn runs only in CI). Edits were checked by reading types and call sites; CI is the compile.
 - The shell script has a self-test that passes locally.
+
+## Letterhead round 2 (13 Nov)
+- `packages/emails/src/components/BaseEmailHtml.tsx`: logo tile (72 px, `PR_EMAIL_LOGO_URL`), 4 px brand stripe on the card, eyebrow and left-aligned title, centred footer (name, company, `PR_EMAIL_FOOTER_LINES`, reply note, site link). New optional prop `eyebrow` (booking emails pass "Booking").
+- `Info.tsx` (label left, value right rows), `WhenInfo.tsx` (NZ format, "Friday 20 November 2026, 2.00 to 2.30pm"), `WhoInfo.tsx` (name, role, email), `ManageLink.tsx` and `CallToAction.tsx` (table buttons in the brand colour), `LocationInfo.tsx` ("Cal Video" shows as "Video call").
+- `packages/i18n/locales/en/common.json`: `organizer` is "Organiser".
+- `packages/emails/email-manager.ts`: attendee cancel email no longer runs the booking title through `getEventName` a second time (it repeated "between X and Y" in the subject and body) unless the event type has a custom event name.
+- New env: `PR_EMAIL_NAME` (name guests see, default the app name), `PR_EMAIL_FOOTER_LINES` (address and phone, separated by |). Also set `NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS`: upstream defaults to help@cal.com and the password and verification emails print it.
+
+## Public-repo leak check (13 Nov)
+- `scripts/paperrocket/check-no-infra.sh` (copied from paperrocket-sign, own-file list adapted) and a step at the top of `.github/workflows/paperrocket-check.yml` (also now runs on pull requests). It fails if our own files, or any line we add since the pinned upstream commit, name a client, a host, a server path or a loopback address. The real cutover runbook is private; `docs/cutover.md` is a generic outline. Update the base commit in the workflow when upstream is merged.
+
+## Turbo env pass-through (13 Nov)
+- `turbo.json`: `PR_*` added to `globalEnv`. The image starts the app with `yarn start`, which runs turbo, and turbo strict env mode only passes the variables it lists. Without this every `PR_*` setting (email name, brand colour, logo, footer lines, default location, limiter switch) was silently ignored at runtime. Found in the preview on 13 Nov.
+
+## Footer, NZ dates, brand files (15 Nov, PAP-1492)
+- `packages/emails/src/components/BaseEmailHtml.tsx`: the footer (name, company, footer lines, reply note, site link) always shows. `hideLogo` (set for platform clients and `hideBranding`) used to hide it, so those emails had no footer lines.
+- New: `packages/lib/paperrocketDate.ts` (`formatNzRange`) and its test. One NZ formatter, "Monday 16 November 2026, 4.45 to 5.00pm" (24-hour: "16.45 to 17.00").
+- `packages/emails/templates/attendee-scheduled-email.ts` and `packages/emails/lib/utils/date-formatting.ts`: `getFormattedDate()` uses it. This is the `{{date}}` in every email subject (cancel, reschedule, request, reminder), so subjects no longer read "4:45pm - 5:00pm, Monday, November 16, 2026".
+- `packages/emails/src/components/WhenInfo.tsx`: uses the same formatter instead of its own copy.
+- `apps/web/modules/bookings/views/bookings-single-view.tsx`: the When block on the booking success page (single and recurring) uses it, on one line, timezone after it.
+- Not changed: SMS text, the booker's slot list, and the "complete your booking" title (still uses the long localised date).
+- `.github/workflows/paperrocket-check.yml`: runs `packages/lib/paperrocketDate.test.ts` too.
+
+## pr.7 (18 Nov, PAP-1652, PAP-1456)
+- **Logo route** `apps/web/app/api/logo/route.ts`: with no team logo, the default logo and favicons are read from `public/` on disk (new `readPublicLogo.ts`, own origin, known image types, no path escape) instead of fetched from `WEBAPP_URL`. The fetch 404'd whenever the public host was not reachable from the container, so the signed-in header logo and favicons were broken. Test `readPublicLogo.test.ts`.
+- **Login card** `apps/web/modules/auth/login-view.tsx`: shows `PR_LOGIN_LOGO_URL` (https or a same-site path, `getLoginLogoUrl()` in `oidc.ts`, passed with `getOidcPublicProps()`), else `NEXT_PUBLIC_APP_NAME`, never "Cal.diy". The OIDC button grows to fit: logo inside, label wraps. The "Add this app to your home screen" banner is gone (it was only on this page).
+- `PR_LOGIN_BUTTON_COLOR` (#rrggbb, `getLoginButtonColor()` in `oidc.ts`) colours the OIDC button with white text (Daniel, 18 Nov: the brand blue). Test `oidc.test.ts`.
+- `packages/ui/components/logo/Logo.tsx`: alt and title are the app name.
+- **NZ dates on booking pages** `packages/features/bookings/Booker/utils/dates.tsx`: English uses `formatNzDate`, `formatNzTime`, `formatNzTimeRange` (new in `packages/lib/paperrocketDate.ts`, tested): "Thursday 19 November 2026", "9.00am". Other languages keep upstream Intl formatting.
+- **Terms line** `PR_HIDE_BOOKER_TERMS=true` hides "By proceeding, you agree to ... Terms and Privacy Policy" on the booking form. Read in the two booking page loaders (`apps/web/server/lib/[user]/[type]/getServerSideProps.ts`, `apps/web/lib/d/[link]/[slug]/getServerSideProps.tsx`), passed as `hideTerms` through `BookerProps` and `Booker.tsx` to `BookEventForm.tsx`. `PR_*` already passes through turbo.
+- **OIDC** `next-auth-options.ts`: provider `httpOptions: { timeout: 10000 }` (openid-client's 3.5 s timed out on a cold start), provider built by exported `buildOidcProvider()`. `events.linkAccount` sets `emailVerified` for OIDC users that have none (`markOidcUserEmailVerified`): next-auth 4 creates OAuth users with `emailVerified: null`, which sent the first OIDC sign-up to /auth/verify-email. Only reached after the signIn callback accepted `email_verified: true`. Tests in `next-auth-options.test.ts`.
+- **Hidden event types with private links** (new `packages/features/bookings/lib/paperrocketPrivateLink.ts`, tested): bookable only with one of their own unexpired hashed links (`maxUsageCount` 0 stays unlimited), to reschedule a booking of the same event type, or by the signed-in owner (Preview). Slots 2 onwards of a recurring series skip the usage count (slot 1 already counted it) but still need the link; the signal is `prLaterRecurringSlot` in the booking meta, set only by `RecurringBookingService.ts` (`dto/types.d.ts`), never from the request body. A seated booking joined with `bookingUid` passes on the page and the API when it belongs to the same event type. Enforced in `RegularBookingService.ts` (403 "This event can only be booked with its private link.") and on the plain `/<user>/<slug>` page (404). Hidden event types without links behave as upstream. Not added to team event pages: the API check covers them.

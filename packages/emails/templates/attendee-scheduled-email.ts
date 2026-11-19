@@ -1,5 +1,6 @@
 import { getRichDescription } from "@calcom/lib/CalEventParser";
 import { getReplyToHeader } from "@calcom/lib/getReplyToHeader";
+import { formatNzRange } from "@calcom/lib/paperrocketDate";
 import { TimeFormat } from "@calcom/lib/timeFormat";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 import type { TFunction } from "i18next";
@@ -101,11 +102,15 @@ ${getRichDescription(this.calEvent, this.t)}
     });
   }
 
+  // paperrocket-book: NZ style, "Monday 16 November 2026, 4.45 to 5.00pm"
   public getFormattedDate() {
     const inviteeTimeFormat = this.calEvent.organizer.timeFormat || TimeFormat.TWELVE_HOUR;
-
-    return `${this.getInviteeStart(inviteeTimeFormat)} - ${this.getInviteeEnd(inviteeTimeFormat)}, ${this.t(
-      this.getInviteeStart("dddd").toLowerCase()
-    )}, ${this.t(this.getInviteeStart("MMMM").toLowerCase())} ${this.getInviteeStart("D, YYYY")}`;
+    return formatNzRange({
+      start: this.calEvent.startTime,
+      end: this.calEvent.endTime,
+      timeZone: this.getTimezone(),
+      locale: this.getLocale(),
+      is24h: String(inviteeTimeFormat).includes("H"),
+    });
   }
 }

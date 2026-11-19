@@ -143,6 +143,8 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
       user: name,
       slug,
       isBrandingHidden: hideBranding,
+      // paperrocket-book: PR_HIDE_BOOKER_TERMS=true hides the Terms and Privacy line on the booking form (read at runtime).
+      hideBookerTerms: process.env.PR_HIDE_BOOKER_TERMS === "true",
       // Sending the team event from the server, because this template file
       // is reused for both team and user events.
       isTeamEvent,

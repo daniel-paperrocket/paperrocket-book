@@ -86,6 +86,10 @@ RUN node_modules/.bin/esbuild scripts/seed-app-store.ts --bundle --platform=node
 # paperrocket-book: source maps are never read at run time.
 RUN find apps/web/.next -name '*.map' -type f -delete
 
+# paperrocket-book: files the app reads from the monorepo at run time by a path built in code, which Next's file
+# tracing can't see: the sign-in email template and the app store descriptions.
+RUN mkdir -p /runtime-extra && cd packages   && cp --parents emails/templates/confirm-email.html /runtime-extra/   && find app-store -maxdepth 2 -name DESCRIPTION.md -exec cp --parents {} /runtime-extra/ ;
+
 # paperrocket-book: the Prisma CLI for "migrate deploy" at start, on its own, so the run stage needs no workspace node_modules.
 FROM node:22-slim AS prisma-cli
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
@@ -107,6 +111,7 @@ COPY --from=builder-two /calcom/apps/web/public ./apps/web/public
 COPY --from=builder-two /calcom/packages/prisma/schema.prisma ./packages/prisma/schema.prisma
 COPY --from=builder-two /calcom/packages/prisma/migrations ./packages/prisma/migrations
 COPY --from=builder-two /calcom/scripts ./scripts
+COPY --from=builder-two /runtime-extra ./packages
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
   BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL

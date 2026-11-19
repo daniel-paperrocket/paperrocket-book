@@ -88,7 +88,7 @@ RUN find apps/web/.next -name '*.map' -type f -delete
 
 # paperrocket-book: files the app reads from the monorepo at run time by a path built in code, which Next's file
 # tracing can't see: the sign-in email template and the app store descriptions.
-RUN mkdir -p /runtime-extra && cd packages   && cp --parents emails/templates/confirm-email.html /runtime-extra/   && find app-store -maxdepth 2 -name DESCRIPTION.md -exec cp --parents {} /runtime-extra/ ;
+RUN mkdir -p /runtime-extra && cd packages   && cp --parents emails/templates/confirm-email.html /runtime-extra/   && find app-store -maxdepth 2 -name DESCRIPTION.md -exec cp --parents -t /runtime-extra/ {} +
 
 # paperrocket-book: the Prisma CLI for "migrate deploy" at start, on its own, so the run stage needs no workspace node_modules.
 FROM node:22-slim AS prisma-cli
